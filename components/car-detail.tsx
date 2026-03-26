@@ -278,9 +278,9 @@ export function CarDetail({ carId, onBack }: CarDetailProps) {
                             <Phone className="h-4 w-4 mr-2" />
                             {car.dealer_phone}
                         </Button>
-                </div>
-            </CardContent>
-        </Card>
+                    </div>
+                </CardContent>
+            </Card>
         </div >
     )
 }

@@ -32,7 +32,7 @@ export default function CarScoutPage() {
 
       const response = await fetch(`/api/cars?${params.toString()}`)
       const data = await response.json()
-      setCars(data)
+      setCars(data.cars)
     } catch (error) {
       console.error("Error fetching cars:", error)
       setCars([])
