@@ -48,13 +48,13 @@ const countryFlags: Record<string, string> = {
 }
 
 function FuelBadge({ fuelType }: { fuelType: Car["fuel_type"] }) {
-    const config = {
+    const config: Record<string, { label: string; className: string }> = {
         el: { label: "Electric", className: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
         benzin: { label: "Benzin", className: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
         diesel: { label: "Diesel", className: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30" },
         hybrid: { label: "Hybrid", className: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
     }
-    const { label, className } = config[fuelType]
+    const { label, className } = config[fuelType] ?? { label: fuelType, className: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30" }
     return <Badge variant="outline" className={className}>{label}</Badge>
 }
 
@@ -129,7 +129,6 @@ export function CarDetail({ carId, onBack }: CarDetailProps) {
         )
     }
 
-    // Filter for purchase scenarios only and group by usage_type
     const purchaseScenarios = tcoData.tco_scenarios.filter((s) => s.scenario_type === "purchase")
     const privateScenarios = purchaseScenarios
         .filter((s) => s.usage_type === "private")
@@ -138,9 +137,8 @@ export function CarDetail({ carId, onBack }: CarDetailProps) {
         .filter((s) => s.usage_type === "company")
         .sort((a, b) => a.holding_period_years - b.holding_period_years)
 
-    // Build chart data
-    const chartData = tcoData.financing_sensitivity.map((item) => ({
-        downPayment: `${item.down_payment_dkk / 1000}k`,
+    const chartData = (tcoData.financing_sensitivity ?? []).map((item) => ({
+        downPayment: String(item.down_payment_dkk / 1000) + "k",
         private: item.private_monthly_dkk,
         company: item.company_monthly_dkk,
     }))
@@ -156,12 +154,11 @@ export function CarDetail({ carId, onBack }: CarDetailProps) {
                 Back to list
             </Button>
 
-            {/* Hero Image */}
             <div className="relative aspect-[21/9] overflow-hidden rounded-xl">
                 {car.stored_image_url && !imageError ? (
                     <img
-                        src={car.stored_image_url}
-                        alt={`${car.brand} ${car.model}`}
+                        src={car.stored_image_url ?? undefined}
+                        alt={car.brand + " " + car.model}
                         className="h-full w-full object-cover"
                         onError={() => setImageError(true)}
                     />
@@ -184,17 +181,15 @@ export function CarDetail({ carId, onBack }: CarDetailProps) {
                 </div>
             </div>
 
-            {/* Key Specs */}
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
                 <SpecItem icon={Calendar} label="Year" value={String(car.first_registration_year)} />
-                <SpecItem icon={Gauge} label="Mileage" value={`${formatNumber(car.mileage_km)} km`} />
+                <SpecItem icon={Gauge} label="Mileage" value={formatNumber(car.mileage_km) + " km"} />
                 <SpecItem icon={Fuel} label="Fuel" value={car.fuel_type} />
-                <SpecItem icon={Zap} label="Power" value={`${car.power_kw} kW`} />
+                <SpecItem icon={Zap} label="Power" value={String(car.power_kw) + " kW"} />
                 <SpecItem icon={Settings2} label="Transmission" value={car.transmission} />
-                <SpecItem icon={MapPin} label="Country" value={`${countryFlags[car.country] || ""} ${car.country}`} />
+                <SpecItem icon={MapPin} label="Country" value={(countryFlags[car.country] || "") + " " + car.country} />
             </div>
 
-            {/* TCO Scenarios Table */}
             <Card className="border-border bg-card">
                 <CardHeader>
                     <CardTitle className="text-lg">TCO Scenarios (Monthly Equivalent in DKK)</CardTitle>
@@ -204,43 +199,27 @@ export function CarDetail({ carId, onBack }: CarDetailProps) {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-border">
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                                        Scenario
-                                    </th>
-                                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">
-                                        2 years
-                                    </th>
-                                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">
-                                        3 years
-                                    </th>
-                                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">
-                                        5 years
-                                    </th>
+                                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Scenario</th>
+                                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">2 years</th>
+                                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">3 years</th>
+                                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">5 years</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr className="border-b border-border/50">
-                                    <td className="px-4 py-3 text-sm font-medium text-foreground">
-                                        Purchase — Private
-                                    </td>
+                                    <td className="px-4 py-3 text-sm font-medium text-foreground">Purchase — Private</td>
                                     {privateScenarios.map((s) => (
                                         <td key={s.holding_period_years} className="px-4 py-3 text-center">
-                                            <span className="font-semibold text-foreground">
-                                                {formatNumber(s.monthly_equivalent_dkk)}
-                                            </span>
+                                            <span className="font-semibold text-foreground">{formatNumber(s.monthly_equivalent_dkk)}</span>
                                             <span className="ml-1 text-xs text-muted-foreground">DKK</span>
                                         </td>
                                     ))}
                                 </tr>
                                 <tr>
-                                    <td className="px-4 py-3 text-sm font-medium text-foreground">
-                                        Purchase — Company
-                                    </td>
+                                    <td className="px-4 py-3 text-sm font-medium text-foreground">Purchase — Company</td>
                                     {companyScenarios.map((s) => (
                                         <td key={s.holding_period_years} className="px-4 py-3 text-center">
-                                            <span className="font-semibold text-foreground">
-                                                {formatNumber(s.monthly_equivalent_dkk)}
-                                            </span>
+                                            <span className="font-semibold text-foreground">{formatNumber(s.monthly_equivalent_dkk)}</span>
                                             <span className="ml-1 text-xs text-muted-foreground">DKK</span>
                                         </td>
                                     ))}
@@ -251,64 +230,32 @@ export function CarDetail({ carId, onBack }: CarDetailProps) {
                 </CardContent>
             </Card>
 
-            {/* Financing Sensitivity Chart */}
             <Card className="border-border bg-card">
                 <CardHeader>
                     <CardTitle className="text-lg">Financing Sensitivity</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                        Monthly equivalent based on down payment (100k - 400k DKK)
-                    </p>
+                    <p className="text-sm text-muted-foreground">Monthly equivalent based on down payment (100k - 400k DKK)</p>
                 </CardHeader>
                 <CardContent>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                <XAxis
-                                    dataKey="downPayment"
-                                    stroke="hsl(var(--muted-foreground))"
-                                    fontSize={12}
-                                    tickLine={false}
-                                />
-                                <YAxis
-                                    stroke="hsl(var(--muted-foreground))"
-                                    fontSize={12}
-                                    tickLine={false}
-                                    tickFormatter={(value) => `${value / 1000}k`}
-                                />
+                                <XAxis dataKey="downPayment" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} />
+                                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} tickFormatter={(value: number) => String(value / 1000) + "k"} />
                                 <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: "hsl(var(--card))",
-                                        border: "1px solid hsl(var(--border))",
-                                        borderRadius: "8px",
-                                    }}
+                                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
                                     labelStyle={{ color: "hsl(var(--foreground))" }}
-                                    formatter={(value: number) => [`${formatNumber(value)} DKK/mo`]}
+                                    formatter={(value) => [formatNumber(Number(value)) + " DKK/mo"]}
                                 />
                                 <Legend />
-                                <Line
-                                    type="monotone"
-                                    dataKey="private"
-                                    name="Private"
-                                    stroke="hsl(var(--chart-1))"
-                                    strokeWidth={2}
-                                    dot={{ fill: "hsl(var(--chart-1))" }}
-                                />
-                                <Line
-                                    type="monotone"
-                                    dataKey="company"
-                                    name="Company"
-                                    stroke="hsl(var(--chart-2))"
-                                    strokeWidth={2}
-                                    dot={{ fill: "hsl(var(--chart-2))" }}
-                                />
+                                <Line type="monotone" dataKey="private" name="Private" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{ fill: "hsl(var(--chart-1))" }} />
+                                <Line type="monotone" dataKey="company" name="Company" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ fill: "hsl(var(--chart-2))" }} />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </CardContent>
             </Card>
 
-            {/* Dealer Info */}
             <Card className="border-border bg-card">
                 <CardHeader>
                     <CardTitle className="text-lg">Dealer Information</CardTitle>
@@ -326,17 +273,15 @@ export function CarDetail({ carId, onBack }: CarDetailProps) {
                                 </p>
                             </div>
                         </div>
-                        <a
-                            href={`tel:${car.dealer_phone}`}
-                            className="flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-4 py-2 text-foreground transition-colors hover:bg-secondary"
-                        >
-                            <Phone className="h-4 w-4" />
+
+                        <Button variant="outline" onClick={() => window.open("tel:" + car.dealer_phone)}>
+                            <Phone className="h-4 w-4 mr-2" />
                             {car.dealer_phone}
-                        </a>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+                        </Button>
+                </div>
+            </CardContent>
+        </Card>
+        </div >
     )
 }
 
@@ -347,15 +292,12 @@ function CarDetailSkeleton({ onBack }: { onBack: () => void }) {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to list
             </Button>
-
             <Skeleton className="aspect-[21/9] rounded-xl" />
-
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
                 {Array.from({ length: 6 }).map((_, i) => (
                     <Skeleton key={i} className="h-20 rounded-lg" />
                 ))}
             </div>
-
             <Card className="border-border bg-card">
                 <CardHeader>
                     <Skeleton className="h-6 w-48" />
@@ -364,7 +306,6 @@ function CarDetailSkeleton({ onBack }: { onBack: () => void }) {
                     <Skeleton className="h-32 w-full" />
                 </CardContent>
             </Card>
-
             <Card className="border-border bg-card">
                 <CardHeader>
                     <Skeleton className="h-6 w-48" />

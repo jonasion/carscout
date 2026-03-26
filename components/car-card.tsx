@@ -87,7 +87,7 @@ export function CarCard({ car, onClick }: CarCardProps) {
                     <CarPlaceholder brand={car.brand} />
                 ) : (
                     <img
-                        src={car.stored_image_url}
+                        src={car.stored_image_url ?? undefined}
                         alt={`${car.brand} ${car.model}`}
                         className="h-full w-full object-cover transition-transform group-hover:scale-105"
                         onError={() => setImageError(true)}

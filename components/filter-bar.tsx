@@ -23,7 +23,7 @@ export function FilterBar({ filters, onFilterChange }: FilterBarProps) {
                 <Fuel className="h-4 w-4 text-muted-foreground" />
                 <Select
                     value={filters.fuel_type}
-                    onValueChange={(value) => onFilterChange("fuel_type", value)}
+                    onValueChange={(value) => onFilterChange("fuel_type", value ?? "")}
                 >
                     <SelectTrigger className="w-[130px] bg-secondary">
                         <SelectValue placeholder="Fuel type" />
@@ -42,7 +42,7 @@ export function FilterBar({ filters, onFilterChange }: FilterBarProps) {
                 <Globe className="h-4 w-4 text-muted-foreground" />
                 <Select
                     value={filters.source}
-                    onValueChange={(value) => onFilterChange("source", value)}
+                    onValueChange={(value) => onFilterChange("source", value ?? "")}
                 >
                     <SelectTrigger className="w-[150px] bg-secondary">
                         <SelectValue placeholder="Source" />
@@ -59,7 +59,7 @@ export function FilterBar({ filters, onFilterChange }: FilterBarProps) {
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 <Select
                     value={filters.country}
-                    onValueChange={(value) => onFilterChange("country", value)}
+                    onValueChange={(value) => onFilterChange("country", value ?? "")}
                 >
                     <SelectTrigger className="w-[130px] bg-secondary">
                         <SelectValue placeholder="Country" />
