@@ -18,10 +18,33 @@ export type Car = {
 }
 
 export type TCOScenario = {
-    scenario_type: "purchase"
+    id: string
+    car_id: string
+    scenario_type: "purchase" | "flexlease"
     usage_type: "private" | "company"
-    holding_period_years: 2 | 3 | 5
+    holding_period_years: number
+    origin: string
+    purchase_price_dkk: number
+    down_payment_dkk: number | null
+    financed_amount_dkk: number | null
+    loan_rate_pct: number | null
+    loan_term_months: number | null
+    monthly_loan_payment_dkk: number | null
+    registration_tax_dkk: number | null
+    ev_deduction_applied_dkk: number | null
+    vat_saved_dkk: number | null
+    import_costs_dkk: number | null
+    total_on_road_cost_dkk: number | null
+    fuel_energy_total_dkk: number | null
+    insurance_total_dkk: number | null
+    maintenance_total_dkk: number | null
+    company_car_tax_total_dkk: number | null
+    estimated_market_value_at_exit_dkk: number | null
+    depreciation_source: string | null
+    net_exit_proceeds_dkk: number | null
+    total_outofpocket_dkk: number
     monthly_equivalent_dkk: number
+    notes: string | null
 }
 
 export type FinancingSensitivity = {

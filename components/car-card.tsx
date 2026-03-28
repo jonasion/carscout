@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import type { Car, TCOData } from "@/lib/types"
+import type { Car } from "@/lib/types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
@@ -15,40 +15,35 @@ function formatNumber(num: number): string {
 }
 
 const countryFlags: Record<string, string> = {
-    DK: "🇩🇰",
-    DE: "🇩🇪",
-    SE: "🇸🇪",
-    NO: "🇳🇴",
-    NL: "🇳🇱",
-    BE: "🇧🇪",
-    FR: "🇫🇷",
+    DK: "🇩🇰", DE: "🇩🇪", SE: "🇸🇪", NO: "🇳🇴",
+    NL: "🇳🇱", BE: "🇧🇪", FR: "🇫🇷",
 }
 
-function FuelBadge({ fuelType }: { fuelType: Car["fuel_type"] }) {
-    const config = {
-        el: { label: "Electric", className: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
-        benzin: { label: "Benzin", className: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-        diesel: { label: "Diesel", className: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30" },
-        hybrid: { label: "Hybrid", className: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
+const countryNames: Record<string, string> = {
+    DK: "Danmark", DE: "Tyskland", SE: "Sverige", NO: "Norge",
+    NL: "Holland", BE: "Belgien", FR: "Frankrig",
+}
+
+function FuelBadge({ fuelType }: { fuelType: string }) {
+    const config: Record<string, { label: string; className: string }> = {
+        el: { label: "Elektrisk", className: "bg-emerald-600/30 text-emerald-300 border-emerald-500/50" },
+        benzin: { label: "Benzin", className: "bg-blue-600/30 text-blue-300 border-blue-500/50" },
+        diesel: { label: "Diesel", className: "bg-zinc-600/30 text-zinc-300 border-zinc-500/50" },
+        hybrid: { label: "Hybrid", className: "bg-purple-600/30 text-purple-300 border-purple-500/50" },
+        phev: { label: "Plug-in", className: "bg-purple-600/30 text-purple-300 border-purple-500/50" },
     }
-    const { label, className } = (config as any)[fuelType] ?? { label: fuelType, className: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30" }
+    const { label, className } = config[fuelType] ?? {
+        label: fuelType || "Ukendt",
+        className: "bg-zinc-600/30 text-zinc-300 border-zinc-500/50",
+    }
     return <Badge variant="outline" className={className}>{label}</Badge>
-}
-
-function CountryDisplay({ country }: { country: string }) {
-    const flag = countryFlags[country] || ""
-    return (
-        <span className="text-sm">
-            {flag} {country}
-        </span>
-    )
 }
 
 function CarPlaceholder({ brand }: { brand: string }) {
     return (
         <div className="flex h-full w-full items-center justify-center bg-secondary">
             <span className="text-5xl font-bold text-muted-foreground/50">
-                {brand.charAt(0).toUpperCase()}
+                {brand?.charAt(0).toUpperCase() ?? "?"}
             </span>
         </div>
     )
@@ -96,6 +91,8 @@ export function CarCard({ car, onClick }: CarCardProps) {
     }, [car.id])
 
     const showPlaceholder = !car.stored_image_url || imageError
+    const flag = countryFlags[car.country] || ""
+    const name = countryNames[car.country] ?? car.country
 
     return (
         <Card
@@ -130,7 +127,7 @@ export function CarCard({ car, onClick }: CarCardProps) {
                     <span className="h-1 w-1 rounded-full bg-muted-foreground" />
                     <span>{formatNumber(car.mileage_km)} km</span>
                     <span className="h-1 w-1 rounded-full bg-muted-foreground" />
-                    <CountryDisplay country={car.country} />
+                    <span>{flag} {name}</span>
                 </div>
 
                 <div className="flex items-end justify-between">
@@ -147,7 +144,7 @@ export function CarCard({ car, onClick }: CarCardProps) {
                             <p className="text-sm text-muted-foreground">Beregnes...</p>
                         ) : tcoStatus === 'ready' && lowestTco !== null ? (
                             <p className="font-semibold text-primary">
-                                {new Intl.NumberFormat('da-DK').format(lowestTco)} kr/md
+                                {formatNumber(lowestTco)} kr/md
                             </p>
                         ) : (
                             <p className="text-sm text-muted-foreground">—</p>
