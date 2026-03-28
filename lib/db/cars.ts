@@ -251,7 +251,6 @@ export async function listCars(filters?: {
     if (filters?.model) query = query.ilike('model', filters.model)
     if (filters?.fuel_type) query = query.eq('fuel_type', filters.fuel_type)
     if (filters?.transmission) {
-        // Normalize: Bilbasen stores "Automatisk"/"Manuel", AutoScout stores "automatic"/"manual"
         const variants =
             filters.transmission === 'automatic'
                 ? ['automatic', 'Automatisk']
@@ -273,10 +272,10 @@ export async function listCars(filters?: {
     const showSold = filters?.is_sold ?? false
     query = query.eq('is_sold', showSold)
 
-    query = query.limit(filters?.limit ?? 50)
+    query = query.limit(filters?.limit ?? 100)
     if (filters?.offset) query = query.range(
         filters.offset,
-        filters.offset + (filters.limit ?? 50) - 1
+        filters.offset + (filters.limit ?? 100) - 1
     )
 
     const { data, error } = await query
@@ -286,7 +285,33 @@ export async function listCars(filters?: {
         return []
     }
 
-    return data
+    if (!data || data.length === 0) return []
+
+    // Fetch lowest private purchase TCO for each car
+    const carIds = data.map((c) => c.id)
+    const { data: tcoRows } = await supabase
+        .from('tco_scenarios')
+        .select('car_id, monthly_equivalent_dkk')
+        .in('car_id', carIds)
+        .eq('scenario_type', 'purchase')
+        .eq('usage_type', 'private')
+
+    const minTco: Record<string, number> = {}
+    if (tcoRows) {
+        for (const row of tcoRows) {
+            const val = row.monthly_equivalent_dkk
+            if (val != null && isFinite(val) && val > 0) {
+                if (!minTco[row.car_id] || val < minTco[row.car_id]) {
+                    minTco[row.car_id] = val
+                }
+            }
+        }
+    }
+
+    return data.map((car) => ({
+        ...car,
+        lowest_tco_monthly_dkk: minTco[car.id] ?? null,
+    }))
 }
 
 // ============================================================

@@ -1,12 +1,46 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import type { Car, FilterState, FilterOptions } from "@/lib/types"
 import { FilterBar } from "@/components/filter-bar"
 import { CarCard, CarCardSkeleton } from "@/components/car-card"
 import { CarDetail } from "@/components/car-detail"
 import { EmptyState } from "@/components/empty-state"
-import { Search } from "lucide-react"
+import { Search, ArrowUpDown } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+type SortOption =
+  | "added_desc"
+  | "price_asc"
+  | "price_desc"
+  | "tco_asc"
+  | "tco_desc"
+  | "year_desc"
+  | "year_asc"
+  | "mileage_asc"
+  | "mileage_desc"
+  | "brand_asc"
+  | "model_asc"
+
+const sortLabels: Record<SortOption, string> = {
+  added_desc: "Nyeste tilføjet",
+  price_asc: "Pris (lav → høj)",
+  price_desc: "Pris (høj → lav)",
+  tco_asc: "TCO (lav → høj)",
+  tco_desc: "TCO (høj → lav)",
+  year_desc: "Årgang (nyeste)",
+  year_asc: "Årgang (ældste)",
+  mileage_asc: "Km (laveste)",
+  mileage_desc: "Km (højeste)",
+  brand_asc: "Mærke (A-Z)",
+  model_asc: "Model (A-Z)",
+}
 
 const defaultFilters: FilterState = {
   brand: "all",
@@ -24,14 +58,58 @@ const defaultFilters: FilterState = {
   source: "all",
 }
 
+type CarWithTco = Car & { lowest_tco_monthly_dkk?: number | null }
+
+function sortCars(cars: CarWithTco[], sortBy: SortOption): CarWithTco[] {
+  const sorted = [...cars]
+  switch (sortBy) {
+    case "added_desc":
+      return sorted // already ordered by scraped_at desc from API
+    case "price_asc":
+      return sorted.sort((a, b) => (a.price_amount ?? 0) - (b.price_amount ?? 0))
+    case "price_desc":
+      return sorted.sort((a, b) => (b.price_amount ?? 0) - (a.price_amount ?? 0))
+    case "tco_asc":
+      return sorted.sort((a, b) => {
+        const aTco = a.lowest_tco_monthly_dkk ?? Infinity
+        const bTco = b.lowest_tco_monthly_dkk ?? Infinity
+        return aTco - bTco
+      })
+    case "tco_desc":
+      return sorted.sort((a, b) => {
+        const aTco = a.lowest_tco_monthly_dkk ?? -Infinity
+        const bTco = b.lowest_tco_monthly_dkk ?? -Infinity
+        return bTco - aTco
+      })
+    case "year_desc":
+      return sorted.sort((a, b) => (b.first_registration_year ?? 0) - (a.first_registration_year ?? 0))
+    case "year_asc":
+      return sorted.sort((a, b) => (a.first_registration_year ?? 0) - (b.first_registration_year ?? 0))
+    case "mileage_asc":
+      return sorted.sort((a, b) => (a.mileage_km ?? 0) - (b.mileage_km ?? 0))
+    case "mileage_desc":
+      return sorted.sort((a, b) => (b.mileage_km ?? 0) - (a.mileage_km ?? 0))
+    case "brand_asc":
+      return sorted.sort((a, b) => (a.brand ?? "").localeCompare(b.brand ?? ""))
+    case "model_asc":
+      return sorted.sort((a, b) => {
+        const brandCmp = (a.brand ?? "").localeCompare(b.brand ?? "")
+        if (brandCmp !== 0) return brandCmp
+        return (a.model ?? "").localeCompare(b.model ?? "")
+      })
+    default:
+      return sorted
+  }
+}
+
 export default function CarScoutPage() {
-  const [cars, setCars] = useState<Car[]>([])
+  const [cars, setCars] = useState<CarWithTco[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null)
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null)
+  const [sortBy, setSortBy] = useState<SortOption>("added_desc")
 
-  // Fetch filter options once on mount
   useEffect(() => {
     async function loadFilterOptions() {
       try {
@@ -78,10 +156,11 @@ export default function CarScoutPage() {
     fetchCars()
   }, [fetchCars])
 
+  const sortedCars = useMemo(() => sortCars(cars, sortBy), [cars, sortBy])
+
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters((prev) => {
       const next = { ...prev, [key]: value }
-      // Reset model when brand changes
       if (key === "brand") {
         next.model = "all"
       }
@@ -103,7 +182,6 @@ export default function CarScoutPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
@@ -117,15 +195,34 @@ export default function CarScoutPage() {
               </div>
             </div>
             {!selectedCarId && (
-              <div className="text-sm text-muted-foreground">
-                {loading ? "Indlæser..." : `${cars.length} biler fundet`}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                  <Select
+                    value={sortBy}
+                    onValueChange={(v) => setSortBy((v ?? "added_desc") as SortOption)}
+                  >
+                    <SelectTrigger className="w-[180px] bg-secondary">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(sortLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {loading ? "Indlæser..." : `${cars.length} biler fundet`}
+                </div>
               </div>
             )}
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {selectedCarId ? (
           <CarDetail carId={selectedCarId} onBack={handleBackToList} />
@@ -148,7 +245,7 @@ export default function CarScoutPage() {
               <EmptyState />
             ) : (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {cars.map((car) => (
+                {sortedCars.map((car) => (
                   <CarCard
                     key={car.id}
                     car={car}
