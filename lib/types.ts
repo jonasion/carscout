@@ -30,6 +30,9 @@ export type TCOScenario = {
     loan_rate_pct: number | null
     loan_term_months: number | null
     monthly_loan_payment_dkk: number | null
+    lease_monthly_payment_dkk: number | null
+    lease_term_months: number | null
+    lease_total_payments_dkk: number | null
     registration_tax_dkk: number | null
     ev_deduction_applied_dkk: number | null
     vat_saved_dkk: number | null
