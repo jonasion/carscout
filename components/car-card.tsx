@@ -132,9 +132,15 @@ export function CarCard({ car, onClick }: CarCardProps) {
 
                 <div className="flex items-end justify-between">
                     <div>
-                        <p className="text-lg font-bold text-foreground">
-                            {formatNumber(car.price_amount)} {car.price_currency}
-                        </p>
+                        {(car as any).listing_type === "lease" && (car as any).lease_monthly_dkk ? (
+                            <p className="text-lg font-bold text-foreground">
+                                {formatNumber((car as any).lease_monthly_dkk)} kr/md
+                            </p>
+                        ) : (
+                            <p className="text-lg font-bold text-foreground">
+                                {formatNumber(car.price_amount)} {car.price_currency}
+                            </p>
+                        )}
                     </div>
                     <div className="text-right">
                         <p className="text-xs text-muted-foreground">Fra</p>
