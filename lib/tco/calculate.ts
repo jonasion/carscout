@@ -529,6 +529,12 @@ export async function computeAllScenarios(
     // Load config
     const config = await readTcoConfig()
 
+    // Convert EUR prices to DKK for TCO calculation
+    const eurRate = (config as any).eur_to_dkk_rate ?? 7.46
+    if (car.price_currency === 'EUR') {
+        car.price_amount = Math.round(car.price_amount * eurRate)
+    }
+
     // Delete any existing scenarios for this car (recompute fresh)
     await supabase.from('tco_scenarios').delete().eq('car_id', carId)
 
