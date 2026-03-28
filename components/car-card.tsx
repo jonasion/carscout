@@ -56,23 +56,43 @@ function CarPlaceholder({ brand }: { brand: string }) {
 
 export function CarCard({ car, onClick }: CarCardProps) {
     const [lowestTco, setLowestTco] = useState<number | null>(null)
-    const [loadingTco, setLoadingTco] = useState(true)
+    const [tcoStatus, setTcoStatus] = useState<'loading' | 'computing' | 'ready' | 'failed'>('loading')
     const [imageError, setImageError] = useState(false)
 
     useEffect(() => {
+        let cancelled = false
         async function fetchTco() {
+            setTcoStatus('loading')
             try {
                 const res = await fetch(`/api/cars/${car.id}/tco`)
-                const data: TCOData = await res.json()
-                const lowest = Math.min(...data.tco_scenarios.map(s => s.monthly_equivalent_dkk))
+                const data = await res.json()
+                let scenarios = data.tco_scenarios ?? []
+
+                if (scenarios.length === 0) {
+                    if (cancelled) return
+                    setTcoStatus('computing')
+                    await fetch(`/api/cars/${car.id}/tco`, { method: 'POST' })
+                    const res2 = await fetch(`/api/cars/${car.id}/tco`)
+                    const data2 = await res2.json()
+                    scenarios = data2.tco_scenarios ?? []
+                }
+
+                if (cancelled) return
+                const values = scenarios
+                    .map((s: any) => s.monthly_equivalent_dkk)
+                    .filter((v: number) => v != null && isFinite(v) && v > 0)
+                const lowest = values.length > 0 ? Math.min(...values) : null
                 setLowestTco(lowest)
+                setTcoStatus(lowest !== null ? 'ready' : 'failed')
             } catch {
-                setLowestTco(null)
-            } finally {
-                setLoadingTco(false)
+                if (!cancelled) {
+                    setLowestTco(null)
+                    setTcoStatus('failed')
+                }
             }
         }
         fetchTco()
+        return () => { cancelled = true }
     }, [car.id])
 
     const showPlaceholder = !car.stored_image_url || imageError
@@ -120,15 +140,17 @@ export function CarCard({ car, onClick }: CarCardProps) {
                         </p>
                     </div>
                     <div className="text-right">
-                        <p className="text-xs text-muted-foreground">From</p>
-                        {loadingTco ? (
+                        <p className="text-xs text-muted-foreground">Fra</p>
+                        {tcoStatus === 'loading' ? (
                             <div className="h-5 w-20 animate-pulse rounded bg-secondary" />
-                        ) : lowestTco !== null ? (
+                        ) : tcoStatus === 'computing' ? (
+                            <p className="text-sm text-muted-foreground">Beregnes...</p>
+                        ) : tcoStatus === 'ready' && lowestTco !== null ? (
                             <p className="font-semibold text-primary">
-                                {formatNumber(lowestTco)} DKK/mo
+                                {new Intl.NumberFormat('da-DK').format(lowestTco)} kr/md
                             </p>
                         ) : (
-                            <p className="text-sm text-muted-foreground">--</p>
+                            <p className="text-sm text-muted-foreground">—</p>
                         )}
                     </div>
                 </div>
