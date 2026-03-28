@@ -26,7 +26,7 @@ function parseYear(reg: string): number | undefined {
   return parts.length === 2 ? parseInt(parts[1]) : undefined
 }
 
-async function uploadImage(imageUrl: string, listingId: string): Promise<string | null> {
+export async function uploadImage(imageUrl: string, listingId: string): Promise<string | null> {
   try {
     const res = await fetch(imageUrl)
     if (!res.ok) return null
@@ -43,7 +43,7 @@ async function uploadImage(imageUrl: string, listingId: string): Promise<string 
   }
 }
 
-function mapListing(listing: any): CarInsert {
+export function mapListing(listing: any): CarInsert {
   const details: any[] = listing.vehicleDetails ?? []
   const wltp: string[] = listing.wltpValues ?? []
 
