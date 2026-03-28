@@ -148,10 +148,45 @@ export function mapPropsToCarInsert(
         .map((m: any) => m.url)
         .filter(Boolean) as string[]
 
-    // Price
-    const priceAmount = listing?.price?.displayValue
-        ? parseFloat(listing.price.displayValue.replace(/[^0-9]/g, ''))
-        : (searchListing.price?.price ?? null)
+    // ── Listing type detection from price field ──
+    const priceName: string = listing?.price?.name ?? ''
+    const priceDesc: string = listing?.price?.description ?? ''
+    const priceDisplay: string = listing?.price?.displayValue ?? ''
+    const rawPriceNum = parseFloat(priceDisplay.replace(/[^0-9]/g, '')) || null
+
+    let listingType = 'sale'
+    let isRegisteredDk = true
+    let hasDkVat = true
+    let priceAmount: number | null = rawPriceNum
+    let leaseMonthlyDkk: number | null = null
+
+    if (priceName.toLowerCase().includes('leasing')) {
+        // Lease listing — monthly payment is in price, not purchase price
+        listingType = 'lease'
+        leaseMonthlyDkk = rawPriceNum
+        priceAmount = null // we don't know the car's purchase price
+        if (priceDesc.toLowerCase().includes('ekskl. moms')) {
+            hasDkVat = false
+            // Add 25% VAT to get the full monthly cost
+            if (leaseMonthlyDkk) leaseMonthlyDkk = Math.round(leaseMonthlyDkk * 1.25)
+        }
+    } else if (priceDesc.toLowerCase().includes('uden afgift')) {
+        // Sale without registration tax
+        isRegisteredDk = false
+    }
+
+    // ── EV-specific data from vehicle details ──
+    const batteryRaw = fromDetails('Batterikapacitet')
+    const batteryKwh = parseFloat(batteryRaw.replace(',', '.').replace(/[^0-9.]/g, '')) || null
+
+    const rangeRaw = fromDetails('Rækkevidde')
+    const rangeMatch = rangeRaw.replace(',', '.').match(/[\d.]+/)
+    const rangeKm = rangeMatch ? parseFloat(rangeMatch[0]) : null
+
+    const energyRaw = fromDetails('Energiforbrug')
+    const energyMatch = energyRaw.replace(',', '.').match(/[\d.]+/)
+    const whPerKm = energyMatch ? parseFloat(energyMatch[0]) : null
+    const consumptionKwh100km = whPerKm ? Math.round(whPerKm * 100) / 1000 : null
 
     return {
         source: 'bilbasen',
@@ -168,12 +203,16 @@ export function mapPropsToCarInsert(
         power_kw: n(powerKw),
         co2_g_km: n(co2GKm),
         consumption_l_100km: n(consumptionL100km),
-        price_amount: n(priceAmount),
+        consumption_kwh_100km: n(consumptionKwh100km),
+        battery_kwh: n(batteryKwh),
+        range_km: n(rangeKm),
+        price_amount: n(priceAmount ?? searchListing.price?.price ?? null),
+        lease_monthly_dkk: n(leaseMonthlyDkk),
         price_currency: 'DKK' as const,
         country: 'DK',
-        is_registered_dk: true,
-        has_dk_vat: true,
-        listing_type: 'sale',
+        is_registered_dk: isRegisteredDk,
+        has_dk_vat: hasDkVat,
+        listing_type: listingType,
         image_urls: imageUrls.length > 0 ? imageUrls : undefined,
         dealer_name: s(seller.name ?? null),
         dealer_phone: s(seller.phoneNumbers?.[0]?.info ?? null),
