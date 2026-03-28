@@ -225,10 +225,17 @@ export async function getPriceHistory(carId: string) {
 export async function listCars(filters?: {
     source?: string
     brand?: string
+    model?: string
     fuel_type?: string
+    transmission?: string
     country?: string
     min_price?: number
     max_price?: number
+    min_year?: number
+    max_year?: number
+    max_mileage?: number
+    min_power_kw?: number
+    max_co2?: number
     is_sold?: boolean
     listing_type?: string
     limit?: number
@@ -241,10 +248,26 @@ export async function listCars(filters?: {
 
     if (filters?.source) query = query.eq('source', filters.source)
     if (filters?.brand) query = query.ilike('brand', filters.brand)
+    if (filters?.model) query = query.ilike('model', filters.model)
     if (filters?.fuel_type) query = query.eq('fuel_type', filters.fuel_type)
+    if (filters?.transmission) {
+        // Normalize: Bilbasen stores "Automatisk"/"Manuel", AutoScout stores "automatic"/"manual"
+        const variants =
+            filters.transmission === 'automatic'
+                ? ['automatic', 'Automatisk']
+                : filters.transmission === 'manual'
+                  ? ['manual', 'Manuel']
+                  : [filters.transmission]
+        query = query.in('transmission', variants)
+    }
     if (filters?.country) query = query.eq('country', filters.country)
     if (filters?.min_price) query = query.gte('price_amount', filters.min_price)
     if (filters?.max_price) query = query.lte('price_amount', filters.max_price)
+    if (filters?.min_year) query = query.gte('first_registration_year', filters.min_year)
+    if (filters?.max_year) query = query.lte('first_registration_year', filters.max_year)
+    if (filters?.max_mileage) query = query.lte('mileage_km', filters.max_mileage)
+    if (filters?.min_power_kw) query = query.gte('power_kw', filters.min_power_kw)
+    if (filters?.max_co2) query = query.lte('co2_g_km', filters.max_co2)
     if (filters?.listing_type) query = query.eq('listing_type', filters.listing_type)
 
     const showSold = filters?.is_sold ?? false
@@ -264,4 +287,67 @@ export async function listCars(filters?: {
     }
 
     return data
+}
+
+// ============================================================
+// GET FILTER OPTIONS — distinct values for filter dropdowns
+// ============================================================
+
+export async function getFilterOptions() {
+    const { data: rows, error } = await supabase
+        .from('cars_raw')
+        .select('brand, model, first_registration_year, fuel_type, transmission, country, source')
+        .eq('is_sold', false)
+
+    if (error || !rows) {
+        console.error('getFilterOptions error:', error?.message)
+        return {
+            brands: [],
+            modelsByBrand: {} as Record<string, string[]>,
+            yearRange: { min: 2000, max: new Date().getFullYear() },
+            fuelTypes: [],
+            transmissions: [],
+            countries: [],
+            sources: [],
+        }
+    }
+
+    const brands = [...new Set(rows.map((r) => r.brand).filter(Boolean))].sort() as string[]
+
+    const modelsByBrand: Record<string, string[]> = {}
+    for (const row of rows) {
+        if (!row.brand || !row.model) continue
+        if (!modelsByBrand[row.brand]) modelsByBrand[row.brand] = []
+        if (!modelsByBrand[row.brand].includes(row.model)) {
+            modelsByBrand[row.brand].push(row.model)
+        }
+    }
+    for (const brand of Object.keys(modelsByBrand)) {
+        modelsByBrand[brand].sort()
+    }
+
+    const years = rows
+        .map((r) => r.first_registration_year)
+        .filter(Boolean) as number[]
+    const yearRange =
+        years.length > 0
+            ? { min: Math.min(...years), max: Math.max(...years) }
+            : { min: 2000, max: new Date().getFullYear() }
+
+    const fuelTypes = [...new Set(rows.map((r) => r.fuel_type).filter(Boolean))].sort() as string[]
+
+    // Normalize transmission values across sources
+    const transmissionMap: Record<string, string> = {
+        automatic: 'automatic',
+        manual: 'manual',
+        Automatisk: 'automatic',
+        Manuel: 'manual',
+    }
+    const rawTransmissions = [...new Set(rows.map((r) => r.transmission).filter(Boolean))] as string[]
+    const transmissions = [...new Set(rawTransmissions.map((t) => transmissionMap[t] ?? t))].sort()
+
+    const countries = [...new Set(rows.map((r) => r.country).filter(Boolean))].sort() as string[]
+    const sources = [...new Set(rows.map((r) => r.source).filter(Boolean))].sort() as string[]
+
+    return { brands, modelsByBrand, yearRange, fuelTypes, transmissions, countries, sources }
 }

@@ -37,9 +37,27 @@ export type TCOData = {
 }
 
 export type FilterState = {
-    fuel_type: string
-    source: string
-    country: string
+    brand: string
+    model: string
+    min_year: string
+    max_year: string
+    max_mileage: string
     min_price: string
     max_price: string
+    fuel_type: string
+    transmission: string
+    min_power_kw: string
+    max_co2: string
+    country: string
+    source: string
+}
+
+export type FilterOptions = {
+    brands: string[]
+    modelsByBrand: Record<string, string[]>
+    yearRange: { min: number; max: number }
+    fuelTypes: string[]
+    transmissions: string[]
+    countries: string[]
+    sources: string[]
 }
