@@ -9,7 +9,7 @@ export async function GET(
     try {
         const { id } = await params
         const scenarios = await getTcoScenariosForCar(id)
-        return NextResponse.json({ scenarios })
+        return NextResponse.json({ tco_scenarios: scenarios })
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         console.error('[TCO GET]', message)
