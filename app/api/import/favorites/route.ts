@@ -102,34 +102,12 @@ async function importAutoscout24(url: string): Promise<{ carId: string | null; e
     const urlParts = url.split('-')
     const uuidCandidate = urlParts.slice(-5).join('-')
     const listingId = listing.id ?? uuidCandidate
-
-    // mapListing expects the search-result shape, so we wrap/adapt if needed
-    const adaptedListing = {
-        ...listing,
-        id: listingId,
-        url: new URL(url).pathname,
-        tracking: listing.tracking ?? {
-            price: listing.prices?.['0']?.price ?? listing.price?.amount,
-            firstRegistration: listing.firstRegistration ?? listing.tracking?.firstRegistration,
-            mileage: listing.mileage?.value ?? listing.tracking?.mileage,
-        },
-        vehicle: listing.vehicle ?? {
-            make: listing.make,
-            model: listing.model,
-            variant: listing.variant,
-            fuel: listing.fuel,
-            transmission: listing.transmission,
-        },
-        location: listing.location ?? { countryCode: 'DE' },
-        seller: listing.seller ?? {},
-        images: listing.images ?? listing.media?.map((m: any) => m.url) ?? [],
-        vehicleDetails: listing.vehicleDetails ?? [],
-        wltpValues: listing.wltpValues ?? [],
-    }
+    listing.id = listingId
+    listing.url = listing.url ?? new URL(url).pathname
 
     let carData
     try {
-        carData = mapAutoscoutListing(adaptedListing)
+        carData = mapAutoscoutListing(listing)
     } catch (e: any) {
         return { carId: null, error: `Mapping failed: ${e.message}` }
     }

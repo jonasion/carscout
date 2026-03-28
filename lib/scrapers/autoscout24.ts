@@ -22,8 +22,12 @@ function mapFuel(fuel: string): string {
 
 function parseYear(reg: string): number | undefined {
   if (!reg || reg === 'new') return undefined
-  const parts = reg.split('-')
-  return parts.length === 2 ? parseInt(parts[1]) : undefined
+  if (reg.includes('-')) {
+    const parts = reg.split('-')
+    if (parts[0].length === 4) return parseInt(parts[0]) // YYYY-MM-DD
+    if (parts.length === 2) return parseInt(parts[1]) // MM-YYYY
+  }
+  return undefined
 }
 
 export async function uploadImage(imageUrl: string, listingId: string): Promise<string | null> {
@@ -49,32 +53,34 @@ export function mapListing(listing: any): CarInsert {
 
   const powerEntry = details.find((d: any) => d.iconName === 'speedometer')
   const powerMatch = powerEntry?.data?.match(/(\d+)\s*kW/)
-  const power_kw = powerMatch ? parseFloat(powerMatch[1]) : undefined
+  const power_kw = powerMatch ? parseFloat(powerMatch[1]) : listing.vehicle?.rawPowerInKw
 
   const consumptionEntry = wltp.find((v: string) => v.includes('l/100'))
   const consumptionMatch = consumptionEntry?.match(/([0-9.]+)\s*l\/100/)
-  const consumption_l_100km = consumptionMatch ? parseFloat(consumptionMatch[1]) : undefined
+  const consumption_l_100km = consumptionMatch ? parseFloat(consumptionMatch[1]) : listing.vehicle?.fuelConsumptionCombined?.raw
 
   const co2Entry = wltp.find((v: string) => v.includes('g/km'))
   const co2Match = co2Entry?.match(/([0-9.]+)\s*g\/km/)
-  const co2_g_km = co2Match ? parseFloat(co2Match[1]) : undefined
+  const co2_g_km = co2Match ? parseFloat(co2Match[1]) : listing.vehicle?.co2emissionInGramPerKmWithFallback?.raw
 
   const rawPrice = listing.tracking?.price
-  const price_amount = rawPrice ? parseFloat(rawPrice) : undefined
+  const price_amount = rawPrice ? parseFloat(rawPrice) : (listing.prices?.public?.priceRaw ?? listing.price?.priceRaw)
+
+  const url = listing.url?.startsWith('/') ? 'https://www.autoscout24.com' + listing.url : listing.url
 
   return {
     source: 'autoscout24',
     source_listing_id: listing.id,
-    url: 'https://www.autoscout24.com' + listing.url,
+    url: url ?? `https://www.autoscout24.com/offers/${listing.id}`,
     title: [listing.vehicle?.make, listing.vehicle?.model, listing.vehicle?.variant]
       .filter(Boolean).join(' '),
     brand: listing.vehicle?.make ?? undefined,
     model: listing.vehicle?.model ?? undefined,
     variant: listing.vehicle?.variant ?? undefined,
-    first_registration_year: parseYear(listing.tracking?.firstRegistration ?? ''),
-    mileage_km: listing.tracking?.mileage ? parseInt(listing.tracking.mileage) : undefined,
-    fuel_type: mapFuel(listing.vehicle?.fuel ?? ''),
-    transmission: listing.vehicle?.transmission === 'Automatic' ? 'automatic' : 'manual',
+    first_registration_year: parseYear(listing.tracking?.firstRegistration ?? listing.vehicle?.firstRegistrationDateRaw ?? ''),
+    mileage_km: listing.tracking?.mileage ? parseInt(listing.tracking.mileage) : listing.vehicle?.mileageInKmRaw,
+    fuel_type: mapFuel(listing.vehicle?.fuel ?? listing.vehicle?.fuelCategory?.formatted ?? listing.vehicle?.primaryFuel?.formatted ?? ''),
+    transmission: (listing.vehicle?.transmission || listing.vehicle?.transmissionType) === 'Automatic' ? 'automatic' : 'manual',
     power_kw,
     consumption_l_100km,
     co2_g_km,
@@ -84,7 +90,7 @@ export function mapListing(listing: any): CarInsert {
     is_registered_dk: false,
     has_dk_vat: false,
     image_urls: listing.images ?? [],
-    dealer_name: listing.seller?.companyName ?? undefined,
+    dealer_name: listing.seller?.companyName ?? listing.seller?.name ?? undefined,
     dealer_phone: listing.seller?.phones?.[0]?.formattedNumber ?? undefined,
     raw_json: listing,
   }
