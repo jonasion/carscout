@@ -276,6 +276,9 @@ export function CarDetail({ carId, onBack }: CarDetailProps) {
     const [loading, setLoading] = useState(true)
     const [imageError, setImageError] = useState(false)
     const [usageType, setUsageType] = useState<UsageToggle>("private")
+    const [downPayment, setDownPayment] = useState(200000)
+    const [loanRate, setLoanRate] = useState(5.0)
+    const [recomputing, setRecomputing] = useState(false)
 
     useEffect(() => {
         let cancelled = false
@@ -295,7 +298,11 @@ export function CarDetail({ carId, onBack }: CarDetailProps) {
                 let scenarios = tcoResult.tco_scenarios ?? []
                 if (scenarios.length === 0) {
                     if (cancelled) return; setTcoStatus("computing")
-                    await fetch(`/api/cars/${carId}/tco`, { method: "POST" })
+                    await fetch(`/api/cars/${carId}/tco`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ down_payment_dkk: downPayment, loan_rate_pct: loanRate }),
+                    })
                     const tcoRes2 = await fetch(`/api/cars/${carId}/tco`)
                     const tcoResult2: TCOData = await tcoRes2.json()
                     scenarios = tcoResult2.tco_scenarios ?? []
@@ -419,6 +426,34 @@ export function CarDetail({ carId, onBack }: CarDetailProps) {
                                     Erhverv
                                 </button>
                             </div>
+                        </div>
+                        <div className="flex flex-wrap items-end gap-3 pt-2">
+                            <div className="flex flex-col gap-1">
+                                <span className="text-xs text-muted-foreground">Udbetaling</span>
+                                <input
+                                    type="number"
+                                    value={downPayment}
+                                    onChange={(e) => setDownPayment(Number(e.target.value))}
+                                    className="w-[130px] rounded-md border border-border bg-secondary px-2 py-1.5 text-sm text-foreground"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <span className="text-xs text-muted-foreground">Rente %</span>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    value={loanRate}
+                                    onChange={(e) => setLoanRate(Number(e.target.value))}
+                                    className="w-[80px] rounded-md border border-border bg-secondary px-2 py-1.5 text-sm text-foreground"
+                                />
+                            </div>
+                            <button
+                                onClick={recompute}
+                                disabled={recomputing}
+                                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            >
+                                {recomputing ? "Beregner..." : "Genberegn"}
+                            </button>
                         </div>
                     </CardHeader>
                     <CardContent>
