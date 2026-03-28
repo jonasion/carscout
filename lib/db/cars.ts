@@ -271,6 +271,7 @@ export async function listCars(filters?: {
 
     const showSold = filters?.is_sold ?? false
     query = query.eq('is_sold', showSold)
+    query = query.eq('is_favorited', true)
 
     query = query.limit(filters?.limit ?? 100)
     if (filters?.offset) query = query.range(
