@@ -6,7 +6,7 @@ import { FilterBar } from "@/components/filter-bar"
 import { CarCard, CarCardSkeleton } from "@/components/car-card"
 import { CarDetail } from "@/components/car-detail"
 import { EmptyState } from "@/components/empty-state"
-import { Search, ArrowUpDown, LayoutGrid, TableProperties, ArrowUp, ArrowDown } from "lucide-react"
+import { Search, ArrowUpDown, LayoutGrid, TableProperties, ArrowUp, ArrowDown, Settings as SettingsIcon } from "lucide-react"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
@@ -229,6 +229,51 @@ export default function CarScoutPage() {
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null)
   const [sortBy, setSortBy] = useState<SortOption>("added_desc")
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const [showSettings, setShowSettings] = useState(false)
+  const [settingsDownPayment, setSettingsDownPayment] = useState(200000)
+  const [settingsLoanRate, setSettingsLoanRate] = useState(5.0)
+  const [settingsLoading, setSettingsLoading] = useState(false)
+  const [settingsSaved, setSettingsSaved] = useState(false)
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/settings")
+        const data = await res.json()
+        setSettingsDownPayment(data.down_payment_dkk)
+        setSettingsLoanRate(data.loan_rate_pct)
+      } catch { }
+    }
+    loadSettings()
+  }, [])
+
+  async function saveSettings() {
+    setSettingsLoading(true)
+    setSettingsSaved(false)
+    try {
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ down_payment_dkk: settingsDownPayment, loan_rate_pct: settingsLoanRate }),
+      })
+      setSettingsSaved(true)
+      setTimeout(() => setSettingsSaved(false), 3000)
+    } catch { }
+    finally { setSettingsLoading(false) }
+  }
+
+  async function recomputeAll() {
+    setSettingsLoading(true)
+    try {
+      await saveSettings()
+      const allCars = (await (await fetch("/api/cars?limit=200")).json()).cars ?? []
+      for (const c of allCars) {
+        await fetch(`/api/cars/${c.id}/tco`, { method: "POST" }).catch(() => { })
+      }
+      await fetchCars()
+    } catch { }
+    finally { setSettingsLoading(false); setShowSettings(false) }
+  }
 
   useEffect(() => {
     async function loadFilterOptions() {
@@ -343,11 +388,65 @@ export default function CarScoutPage() {
                 <div className="text-sm text-muted-foreground">
                   {loading ? "Indlæser..." : `${cars.length} biler fundet`}
                 </div>
+                <button
+                  onClick={() => setShowSettings(true)}
+                  className="rounded-lg border border-border bg-secondary p-2 text-muted-foreground hover:text-foreground transition-colors"
+                  title="Indstillinger"
+                >
+                  <SettingsIcon className="h-4 w-4" />
+                </button>
               </div>
             )}
           </div>
         </div>
       </header>
+            {showSettings && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={() => setShowSettings(false)}>
+                    <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="text-lg font-semibold text-foreground mb-4">Beregningsindstillinger</h2>
+                        <div className="space-y-4">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-sm text-muted-foreground">Udbetaling (DKK)</label>
+                                <input
+                                    type="number"
+                                    value={settingsDownPayment}
+                                    onChange={(e) => setSettingsDownPayment(Number(e.target.value))}
+                                    className="rounded-md border border-border bg-secondary px-3 py-2 text-foreground"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-sm text-muted-foreground">Lånerente (%)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    value={settingsLoanRate}
+                                    onChange={(e) => setSettingsLoanRate(Number(e.target.value))}
+                                    className="rounded-md border border-border bg-secondary px-3 py-2 text-foreground"
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    onClick={saveSettings}
+                                    disabled={settingsLoading}
+                                    className="rounded-md bg-secondary border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary/80 disabled:opacity-50"
+                                >
+                                    {settingsSaved ? "✓ Gemt" : "Gem"}
+                                </button>
+                                <button
+                                    onClick={recomputeAll}
+                                    disabled={settingsLoading}
+                                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                                >
+                                    {settingsLoading ? "Beregner alle..." : "Gem & genberegn alle biler"}
+                                </button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Genberegning opdaterer TCO for alle {cars.length} biler med de nye indstillinger.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
       <div className={`mx-auto px-4 py-6 sm:px-6 lg:px-8 ${viewMode === "table" && !selectedCarId ? "max-w-full" : "max-w-7xl"}`}>
         {selectedCarId ? (
