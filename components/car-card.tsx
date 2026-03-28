@@ -31,7 +31,7 @@ function FuelBadge({ fuelType }: { fuelType: Car["fuel_type"] }) {
         diesel: { label: "Diesel", className: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30" },
         hybrid: { label: "Hybrid", className: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
     }
-    const { label, className } = config[fuelType]
+    const { label, className } = (config as any)[fuelType] ?? { label: fuelType, className: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30" }
     return <Badge variant="outline" className={className}>{label}</Badge>
 }
 
