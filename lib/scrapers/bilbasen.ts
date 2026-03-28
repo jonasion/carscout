@@ -60,7 +60,7 @@ async function fetchSearchPage(
 // STEP 2 — Detail page: extract _props from HTML
 // ============================================================
 
-async function fetchListingDetail(url: string): Promise<Record<string, any> | null> {
+export async function fetchListingDetail(url: string): Promise<Record<string, any> | null> {
     try {
         const response = await fetch(url, { headers: HEADERS })
         if (!response.ok) return null
@@ -80,7 +80,7 @@ async function fetchListingDetail(url: string): Promise<Record<string, any> | nu
 // FIELD MAPPING — _props to cars_raw
 // ============================================================
 
-function mapPropsToCarInsert(
+export function mapPropsToCarInsert(
     props: Record<string, any>,
     searchListing: BilbasenSearchListing
 ) {
