@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { fetchListingDetail, mapPropsToCarInsert } from '@/lib/scrapers/bilbasen'
+import { fetchListingDetail, mapPropsToCarInsert, uploadPrimaryImage } from '@/lib/scrapers/bilbasen'
 import { upsertCar } from '@/lib/db/cars'
 import { computeAllScenarios } from '@/lib/tco/calculate'
 import { createClient } from '@supabase/supabase-js'
@@ -60,6 +60,18 @@ export async function POST(req: NextRequest) {
                     .from('cars_raw')
                     .update({ is_favorited: true })
                     .eq('id', carId)
+
+                // Upload primary image
+                const primaryImageUrl = (carData.image_urls as string[])?.[0]
+                if (primaryImageUrl) {
+                    const storedUrl = await uploadPrimaryImage(carId, primaryImageUrl)
+                    if (storedUrl) {
+                        await supabase
+                            .from('cars_raw')
+                            .update({ stored_image_url: storedUrl })
+                            .eq('id', carId)
+                    }
+                }
 
                 // Compute TCO
                 await computeAllScenarios(carId).catch((e) =>

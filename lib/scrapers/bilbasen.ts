@@ -212,7 +212,7 @@ function mapSearchListingToCarInsert(listing: BilbasenSearchListing) {
 // IMAGE UPLOAD to Supabase Storage
 // ============================================================
 
-async function uploadPrimaryImage(carId: string, imageUrl: string): Promise<string | null> {
+export async function uploadPrimaryImage(carId: string, imageUrl: string): Promise<string | null> {
     try {
         const response = await fetch(imageUrl)
         if (!response.ok) return null
