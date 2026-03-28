@@ -255,8 +255,8 @@ export async function listCars(filters?: {
             filters.transmission === 'automatic'
                 ? ['automatic', 'Automatisk']
                 : filters.transmission === 'manual'
-                  ? ['manual', 'Manuel']
-                  : [filters.transmission]
+                    ? ['manual', 'Manuel']
+                    : [filters.transmission]
         query = query.in('transmission', variants)
     }
     if (filters?.country) query = query.eq('country', filters.country)
@@ -271,7 +271,6 @@ export async function listCars(filters?: {
 
     const showSold = filters?.is_sold ?? false
     query = query.eq('is_sold', showSold)
-    query = query.eq('is_favorited', true)
 
     query = query.limit(filters?.limit ?? 100)
     if (filters?.offset) query = query.range(
@@ -309,9 +308,57 @@ export async function listCars(filters?: {
         }
     }
 
+    // Also fetch registration tax and lease info from best scenario
+    const regTax: Record<string, number> = {}
+    const leaseMonthly: Record<string, number> = {}
+    if (tcoRows) {
+        for (const row of tcoRows) {
+            // We already have these rows — just need reg tax from purchase scenarios
+        }
+    }
+
+    // Fetch registration tax from purchase scenarios
+    const { data: purchaseRows } = await supabase
+        .from('tco_scenarios')
+        .select('car_id, registration_tax_dkk, scenario_type, usage_type, origin')
+        .in('car_id', carIds)
+        .eq('scenario_type', 'purchase')
+        .eq('usage_type', 'private')
+
+    if (purchaseRows) {
+        for (const row of purchaseRows) {
+            const tax = row.registration_tax_dkk ?? 0
+            // Keep the highest (worst case) registration tax per car
+            if (!regTax[row.car_id] || tax > regTax[row.car_id]) {
+                regTax[row.car_id] = tax
+            }
+        }
+    }
+
+    // Fetch lease monthly from flexlease scenarios
+    const { data: leaseRows } = await supabase
+        .from('tco_scenarios')
+        .select('car_id, monthly_equivalent_dkk')
+        .in('car_id', carIds)
+        .eq('scenario_type', 'flexlease')
+        .eq('usage_type', 'private')
+
+    if (leaseRows) {
+        for (const row of leaseRows) {
+            const val = row.monthly_equivalent_dkk
+            if (val != null && isFinite(val) && val > 0) {
+                if (!leaseMonthly[row.car_id] || val < leaseMonthly[row.car_id]) {
+                    leaseMonthly[row.car_id] = val
+                }
+            }
+        }
+    }
+
     return data.map((car) => ({
         ...car,
         lowest_tco_monthly_dkk: minTco[car.id] ?? null,
+        registration_tax_dkk: regTax[car.id] ?? null,
+        lowest_lease_monthly_dkk: leaseMonthly[car.id] ?? null,
     }))
 }
 
