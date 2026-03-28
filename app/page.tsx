@@ -336,61 +336,59 @@ export default function CarScoutPage() {
   return (
     <main className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-2">
             <div
-              className="flex items-center gap-3 cursor-pointer"
+              className="flex items-center gap-2 cursor-pointer shrink-0"
               onClick={() => { setSelectedCarId(null) }}
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <Search className="h-5 w-5 text-primary-foreground" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                <Search className="h-4 w-4 text-primary-foreground" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">CarScout</h1>
+              <div className="hidden sm:block">
+                <h1 className="text-lg font-bold text-foreground leading-tight">CarScout</h1>
                 <p className="text-xs text-muted-foreground">TCO Biloversigt</p>
               </div>
             </div>
             {!selectedCarId && (
-              <div className="flex items-center gap-3">
-                {/* View mode toggle */}
-                <div className="flex rounded-lg border border-border overflow-hidden">
+              <div className="flex items-center gap-2 overflow-x-auto">
+                <div className="flex rounded-lg border border-border overflow-hidden shrink-0">
                   <button
                     onClick={() => setViewMode("grid")}
-                    className={`p-2 transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+                    className={`p-1.5 transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
                     title="Kortoversigt"
                   >
                     <LayoutGrid className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setViewMode("table")}
-                    className={`p-2 transition-colors ${viewMode === "table" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+                    className={`p-1.5 transition-colors ${viewMode === "table" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
                     title="Tabeloversigt"
                   >
                     <TableProperties className="h-4 w-4" />
                   </button>
                 </div>
 
-                {/* Sort dropdown (grid view only) */}
                 {viewMode === "grid" && (
-                  <div className="flex items-center gap-2">
-                    <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                    <Select value={sortBy} onValueChange={(v) => setSortBy((v ?? "added_desc") as SortOption)}>
-                      <SelectTrigger className="w-[180px] bg-secondary"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(sortLabels).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>{label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Select value={sortBy} onValueChange={(v) => setSortBy((v ?? "added_desc") as SortOption)}>
+                    <SelectTrigger className="w-[140px] sm:w-[180px] bg-secondary text-xs sm:text-sm shrink-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(sortLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
 
-                <div className="text-sm text-muted-foreground">
-                  {loading ? "Indlæser..." : `${cars.length} biler fundet`}
-                </div>
+                <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
+                  {loading ? "..." : `${cars.length} biler`}
+                </span>
+
                 <button
                   onClick={() => setShowSettings(true)}
-                  className="rounded-lg border border-border bg-secondary p-2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="rounded-lg border border-border bg-secondary p-1.5 text-muted-foreground hover:text-foreground transition-colors shrink-0"
                   title="Indstillinger"
                 >
                   <SettingsIcon className="h-4 w-4" />
@@ -400,53 +398,53 @@ export default function CarScoutPage() {
           </div>
         </div>
       </header>
-            {showSettings && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={() => setShowSettings(false)}>
-                    <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                        <h2 className="text-lg font-semibold text-foreground mb-4">Beregningsindstillinger</h2>
-                        <div className="space-y-4">
-                            <div className="flex flex-col gap-1">
-                                <label className="text-sm text-muted-foreground">Udbetaling (DKK)</label>
-                                <input
-                                    type="number"
-                                    value={settingsDownPayment}
-                                    onChange={(e) => setSettingsDownPayment(Number(e.target.value))}
-                                    className="rounded-md border border-border bg-secondary px-3 py-2 text-foreground"
-                                />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-sm text-muted-foreground">Lånerente (%)</label>
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    value={settingsLoanRate}
-                                    onChange={(e) => setSettingsLoanRate(Number(e.target.value))}
-                                    className="rounded-md border border-border bg-secondary px-3 py-2 text-foreground"
-                                />
-                            </div>
-                            <div className="flex gap-3 pt-2">
-                                <button
-                                    onClick={saveSettings}
-                                    disabled={settingsLoading}
-                                    className="rounded-md bg-secondary border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary/80 disabled:opacity-50"
-                                >
-                                    {settingsSaved ? "✓ Gemt" : "Gem"}
-                                </button>
-                                <button
-                                    onClick={recomputeAll}
-                                    disabled={settingsLoading}
-                                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                                >
-                                    {settingsLoading ? "Beregner alle..." : "Gem & genberegn alle biler"}
-                                </button>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Genberegning opdaterer TCO for alle {cars.length} biler med de nye indstillinger.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
+      {showSettings && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={() => setShowSettings(false)}>
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-foreground mb-4">Beregningsindstillinger</h2>
+            <div className="space-y-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm text-muted-foreground">Udbetaling (DKK)</label>
+                <input
+                  type="number"
+                  value={settingsDownPayment}
+                  onChange={(e) => setSettingsDownPayment(Number(e.target.value))}
+                  className="rounded-md border border-border bg-secondary px-3 py-2 text-foreground"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm text-muted-foreground">Lånerente (%)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={settingsLoanRate}
+                  onChange={(e) => setSettingsLoanRate(Number(e.target.value))}
+                  className="rounded-md border border-border bg-secondary px-3 py-2 text-foreground"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={saveSettings}
+                  disabled={settingsLoading}
+                  className="rounded-md bg-secondary border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary/80 disabled:opacity-50"
+                >
+                  {settingsSaved ? "✓ Gemt" : "Gem"}
+                </button>
+                <button
+                  onClick={recomputeAll}
+                  disabled={settingsLoading}
+                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {settingsLoading ? "Beregner alle..." : "Gem & genberegn alle biler"}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Genberegning opdaterer TCO for alle {cars.length} biler med de nye indstillinger.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={`mx-auto px-4 py-6 sm:px-6 lg:px-8 ${viewMode === "table" && !selectedCarId ? "max-w-full" : "max-w-7xl"}`}>
         {selectedCarId ? (

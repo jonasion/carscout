@@ -85,10 +85,20 @@ export function FilterBar({ filters, filterOptions, onFilterChange, onReset }: F
         ([, v]) => v !== "" && v !== "all"
     )
 
+    const [filtersOpen, setFiltersOpen] = useState(false)
+
     return (
-        <div className="space-y-3 rounded-lg border border-border bg-card p-4">
-            {/* ── Primary filters ── */}
-            <div className="flex flex-wrap items-end gap-3">
+        <div className="rounded-lg border border-border bg-card">
+            <button
+                onClick={() => setFiltersOpen(!filtersOpen)}
+                className="flex w-full items-center justify-between p-3 sm:hidden"
+            >
+                <span className="text-sm font-medium text-foreground">Filtre</span>
+                {filtersOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+            </button>
+            <div className={`space-y-3 p-4 pt-0 sm:pt-4 ${filtersOpen ? "block" : "hidden sm:block"}`}>
+                {/* ── Primary filters ── */}
+                <div className="flex flex-wrap items-end gap-3">
                 <LabeledField label="Mærke">
                     <Select
                         value={filters.brand}
@@ -327,6 +337,7 @@ export function FilterBar({ filters, filterOptions, onFilterChange, onReset }: F
                     </LabeledField>
                 </div>
             )}
+            </div>
         </div>
     )
 }
