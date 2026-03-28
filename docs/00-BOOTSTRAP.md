@@ -16,13 +16,28 @@ Claude, acting as CarScout build assistant. The user is Simon — non-developer,
 ## Last Session Summary
 
 **Completed:**
-- SPEC-006: Price history tracking — `price_history` table, upsertCar updated, getPriceHistory() added
-- SPEC-006 also fixed BUG-01: created missing `app/api/cars/[id]/route.ts`
-- Created full project documentation (docs/ folder) and GSD spec structure (specs/ folder)
+- SPEC-007: Fixed TCO "—" on cards → now shows "Fra X.XXX kr/md" or "Beregnes..."
+- Car detail page rework: two-column layout, Danish labels, price history chart, defensive null handling
+- Filter bar rework: brand/model/year/mileage/price/fuel + advanced filters (transmission, power, CO₂, country, source)
+- Sort dropdown: 11 sort options including TCO, price, year, mileage, brand, model
+- Favorites import pipeline: Bilbasen (52 cars) + AutoScout24 (22 cars) imported
+- Bilbasen scraper fix: detects lease/uden-afgift/registered listings correctly, extracts EV battery/range data
+- TCO engine: EUR→DKK conversion, fixed API response key (tco_scenarios)
+- TCO breakdown: expandable per-scenario line items, Privat/Erhverv toggle
+- FuelBadge crash fix for unknown fuel types
+- Country display fix (NL→Holland, BE→Belgien)
+- Label contrast improvements
+- DB cleanup: removed non-favorite scraped cars
 
 **Next priority:**
-- SPEC-007: Fix TCO showing "--" on listing cards (BUG-02) — spec is in `specs/active/`
-- Then: SPEC-009 (page title, 5 min fix), SPEC-008 (dark mode)
+- Mobile.de scraper + favorites import
+- Paste-URL-to-import feature in the UI
+- Spreadsheet/table view toggle (compact comparison view)
+- User-adjustable TCO inputs (down payment, interest rate)
+- Source logos on cards (Bilbasen, AutoScout24, Mobile.de)
+- Lease vs purchase TCO comparison logic
+- UI/visual polish pass
+- SPEC-009 (page title), SPEC-008 (dark mode)
 
 ## Key URLs
 

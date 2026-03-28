@@ -10,9 +10,8 @@
 **Verify:** Click any car card on https://carscout-six.vercel.app — detail view should load
 
 ## BUG-02 — TCO shows "--" on listing cards
-**Status:** Open — SPEC-007 in active/  
-**Cause:** Math.min(...[]) returns Infinity when tco_scenarios array is empty  
-**Fix:** See specs/active/007-bug02-tco-cards.md  
+**Status:** ✅ Resolved — SPEC-007
+**Fix:** Four-state display (loading/computing/ready/failed), POST trigger for empty scenarios
 
 ## BUG-03 — Page title is "Create Next App"
 **Status:** Open — SPEC-009 in backlog/  
@@ -20,6 +19,5 @@
 **Time to fix:** 5 minutes  
 
 ## BUG-04 — Country shows "dk DK" on cards (cosmetic)
-**Status:** Partially fixed  
-**Cause:** Flag emoji duplicated with country code  
-**Fix:** Verify countryFlags mapping in car-card.tsx  
+**Status:** ✅ Resolved
+**Fix:** Country names mapped (Danmark, Tyskland, Holland, Belgien, etc.)
