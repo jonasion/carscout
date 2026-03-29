@@ -443,13 +443,17 @@ async function calculateFlexleaseScenario(
     }
 
     // --- Total ---
+    // Lessee returns the car — no exit value to subtract.
+    // If listed monthly payment: depreciation is embedded in the payment already.
+    // If computed monthly: our decomposition does NOT include depreciation, must add it.
+    const hasListedPayment = car.lease_monthly_dkk != null && car.lease_monthly_dkk > 0
     const totalOutOfPocket = Math.round(
         downPayment +
         establishmentFeeInclMoms +
         totalLeasePayments +
         companyCarTax +
-        restvaerdiRisk -
-        exitValue
+        restvaerdiRisk +
+        (hasListedPayment ? 0 : depreciationInclMoms)
     )
     const monthlyEquivalent = Math.round(totalOutOfPocket / months)
 
