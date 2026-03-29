@@ -1,187 +1,150 @@
 # CarScout — Feature Roadmap
+# FILE LOCATION: C:\Users\Simon\carscout\docs\04-ROADMAP.md
 
-Priority order based on: (1) fixing broken core value, (2) data that compounds daily, (3) features that reframe the product.
+Priority order: (1) fix broken core, (2) data compounding daily,
+(3) features that reframe the product, (4) polish.
 
 ---
 
 ## TIER 1 — Fix Core (Do First)
 
-### BUG-01 — Detail page crash
-See bugs.md. Deployed fix needs verification.
+### BUG-02 — TCO "--" on cards — SPEC-007 (active)
+Math.min(...[]) returns Infinity when tco_scenarios is empty.
+Fix fetch logic in car-card.tsx. Trigger computation if missing.
 
-### BUG-02 — TCO on cards
-Cards show "--" for TCO monthly. Fix the `/api/cars/[id]/tco` response handling in `car-card.tsx`. If no scenarios exist, show "Beregnes..." and trigger computation.
+### BUG-03 — Page title — SPEC-009 (backlog)
+5-minute fix in app/layout.tsx.
 
-### BUG-03 — Page title
-5-minute fix in `app/layout.tsx`.
+### BUG-04 — Country "dk DK" on cards
+10-minute fix in car-card.tsx countryFlags mapping.
 
----
-
-## TIER 2 — Data Layer (Highest Long-Term Value)
-
-### DATA-01 — Price history tracking ✅ (schema + logic done)
-Every day without this is data lost forever.
-- `price_history` table created ✅
-- `upsertCar` now detects price changes and logs them ✅
-- **Still needed:** Surface in UI (see DETAIL-02, CARD-03, CARD-04)
-
-### DATA-02 — Days on market
-Derived from `price_history.recorded_at` vs `cars_raw.scraped_at`.
-- Show on card: "87 dage" in red for 90+ days, amber for 30+, green for fresh
-- Show on detail: "Annonceret første gang: 12. feb 2026 (42 dage siden)"
-- A car listed 90+ days in Denmark is almost always negotiable
+### BUG-05 — Images null for many listings
+Image upload retry in scrapers, or fallback to first image_urls entry.
 
 ---
 
-## TIER 3 — Search & Filters (Purpose-Aware)
+## TIER 2 — TCO Accuracy (High Business Value)
 
-### F-01 — Filter by TCO (killer feature)
-Replace/supplement price filter with TCO filter: "Vis biler under 8.000 kr/md — 3 år, privat køb."
-- Requires global scenario selector (F-02) to know which scenario to filter on
-- Query: `tco_scenarios.monthly_equivalent_dkk < X WHERE scenario_type='purchase' AND usage_type='private' AND holding_period_years=3`
-
-### F-02 — Global scenario selector (persistent session setting)
-Set once at top of listing page: private/company, 2/3/5 years, down payment amount.
-All TCO figures on all cards update to reflect that scenario.
-This makes the tool coherent — right now each card fetches all scenarios and shows "lowest" which may be a different scenario for each car.
-
-### F-03 — Source filter as pill toggle
-`Bilbasen | Autoscout24 | Begge` — replace icon dropdown. Source matters enormously for risk profile.
-
-### F-04 — Registration scenario filter
-`DK indregistreret | DK uindregistreret | EU import` — first-class filter, not buried in detail.
-
-### F-05 — Make / Model / Year / Mileage / Power filters
-- Brand dropdown (populated from distinct values in `cars_raw`)
-- Model dropdown (cascades from brand)
-- Year range (dual slider, e.g. 2020–2024)
-- Max mileage slider
-- Power range (kW)
-
-### F-06 — Filter chips + URL persistence
-Active filters shown as dismissible chips. Filter state in URL query params for bookmarking/sharing.
-
-### F-07 — Sort controls
-Sort by: TCO low→high | Listepris | Km | Alder | Dage på markedet | Prisfald
-Primary use case: sort by TCO ascending = "cheapest car to own for 3 years"
-
-### F-08 — Pagination / load more
-Currently hard-limited to 50 results with no pagination.
+### SPEC-019 — Flexlease TCO engine refinement (backlog)
+Three critical fixes to the flexlease calculation:
+1. Depreciation base = base_value only (not on_road_cost)
+2. Age-dependent forholdsmæssig registreringsafgift (2%/1%/0.5%)
+3. Moms on monthly payments for private consumers
+Plus: monthly payment decomposition stored, Danish tooltip dictionary.
+Requires SQL migrations before execution.
 
 ---
 
-## TIER 4 — Listing Cards (Information Architecture)
+## TIER 3 — Search & Filters
 
-### CARD-01 — TCO-first layout
-Current: leads with EUR sticker price
-Target hierarchy:
-```
-[Car name]
-[Year · km · Source flag]
-[TCO: ~4.200 kr/md  ·  3 år privat]   ← PRIMARY
-[Listepris: 19.810 EUR]                 ← SECONDARY, smaller
-```
+### SPEC-011 — Global scenario selector (backlog)
+Set private/company, 2/3/5yr, down payment once at top of page.
+All cards show TCO for that scenario consistently.
+This + SPEC-010 is the single most transformative pair of changes.
 
-### CARD-02 — Source-country risk signal
-DE-sourced listings carry import complexity. Subtle warning badge or color border on DE cards.
+### SPEC-015 — Make/Model/Year/Mileage filters (backlog)
+Brand dropdown, cascading model, year range, max km, power.
 
-### CARD-03 — Price drop badge
-Once price_history has data: show "↓ 25.000 kr" badge in amber. Highest-engagement card element.
+### F-01 — Filter by TCO range (not yet specced)
+"Show me cars under 8,000 kr/md — 3yr private."
+Depends on SPEC-011 (scenario must be set first).
 
-### CARD-04 — Days on market badge
-"87 dage" in red/orange for long-listed cars. Pairs with CARD-03 as negotiation signal cluster.
+### F-06 — URL persistence of filters (not yet specced)
+Bookmarkable searches. Filter state in URL query params.
 
-### CARD-05 — Favorite / save icon
-Heart icon on hover. Persisted in localStorage initially, Supabase `favorites` table later.
-Required for comparison workflow (NAV-02).
+### F-07 — Sort by TCO ascending (not yet specced)
+The primary use case: "cheapest car to own for 3 years."
+
+### F-08 — Pagination (not yet specced)
+Currently hard-limited to 50 results.
+
+---
+
+## TIER 4 — Listing Cards
+
+### SPEC-010 — TCO-first card layout (backlog)
+Lead with monthly_equivalent_dkk, not EUR sticker price.
+Add price drop badge, days-on-market badge, favorite heart.
+
+### SPEC-016 — Price drop + days-on-market badges (backlog)
+Compute signals server-side in list API.
+Green/amber/red days badge. Amber price drop badge.
 
 ---
 
 ## TIER 5 — Navigation & Pages
 
-### NAV-01 — Navigation bar
-Currently: logo only.
-Required pages: `Søg | Sammenlign | Gemte biler | Hvad er TCO?`
+### SPEC-008 — Dark mode (backlog)
+~30 minutes. Tailwind darkMode: 'class'. Theme toggle in header.
 
-### NAV-02 — Comparison view
-The tagline says "TCO Car Comparison" but comparison doesn't exist.
-- Checkbox on cards (max 3 selected)
-- Sticky bottom bar: "Sammenlign 2 biler →"
-- Comparison view: side-by-side table of all TCO scenarios
-- Makes the winner immediately obvious
+### SPEC-014 — Navigation bar (backlog)
+Søg | Gemte biler | Sammenlign | Hvad er TCO? + theme toggle.
 
-### NAV-03 — Pagination
-See F-08.
+### SPEC-012 — Favorites (backlog)
+FavoriteStore class, localStorage, /favorites page. Max 10.
+
+### SPEC-013 — Comparison view (backlog — AWAITING UI EXAMPLES)
+Side-by-side TCO table for up to 3 cars.
+**Do not spec until Simon provides two UI layout examples.**
 
 ---
 
 ## TIER 6 — Car Detail Page
 
-### DETAIL-01 — EU import scenario surfaced explicitly
-Currently detail shows purchase private/company. Missing: EU import tab/column showing:
-- VAT saving (~5% of purchase price for used >6mo, >6000km)
-- Import costs (15,000 DKK generic)
-- Net TCO vs. DK registered equivalent
+### SPEC-018 — EU import scenario in detail view (backlog)
+Third column/tab for DE-sourced listings showing VAT saving,
+import costs, and net TCO vs DK registered equivalent.
 
-### DETAIL-02 — Price history sparkline
-Small line chart: price over time since first seen. Even 2 weeks of data is meaningful.
-Data source: `price_history` table.
+### DETAIL-02 — Price history sparkline (not yet specced)
+Line chart of price over time since first seen.
+Depends on price_history accumulating data.
 
-### DETAIL-03 — Days on market + listing timeline
-"First seen: 12. februar 2026 (42 dage siden)" — motivates negotiation framing.
+### DETAIL-03 — Days on market + listing timeline (not yet specced)
+"First seen: 12. feb 2026 (42 dage siden)"
 
-### DETAIL-04 — Link to original listing
-Prominent CTA: "Se annonce på Bilbasen →" / "Se annonce på AutoScout24 →"
-Currently missing entirely.
-
-### DETAIL-05 — Financing sensitivity graph visibility
-Already built but may be buried. Ensure it's visible without scrolling and has an explanatory label.
+### DETAIL-04 — Link to original listing (not yet specced)
+"Se annonce på Bilbasen →" — currently completely missing.
 
 ---
 
 ## TIER 7 — Onboarding & Trust
 
-### ONBOARD-01 — About / TCO explainer page
-Content needed:
-1. Why sticker price is meaningless in Denmark (registration tax)
-2. The three scenarios (DK reg, DK unreg, EU import)
-3. What the monthly figure includes (depreciation at exit, financing, running costs, tax)
-4. What the financing sensitivity graph shows
-5. Data freshness (scraped daily, SKAT 2026 rules)
-6. Limitations (Tier 2 depreciation until market data builds)
+### SPEC-017 — About page / TCO explainer (backlog)
+Danish language. Six sections. Concrete example with real numbers.
 
-### ONBOARD-02 — First-visit scenario modal
-On first visit: "Er du privat eller erhverv? Hvor lang tid regner du med at eje bilen?"
-Sets global scenario (F-02). Transformative for comprehension.
+### ONBOARD-02 — First-visit scenario modal (not yet specced)
+"Er du privat eller erhverv? Hvor lang tid regner du med at eje bilen?"
+Sets global scenario on first visit. Transformative for comprehension.
 
-### ONBOARD-03 — Data freshness indicator
-"Opdateret i dag" or timestamp somewhere visible. Trust signal.
+### ONBOARD-03 — Data freshness indicator (not yet specced)
+"Opdateret i dag" — trust signal.
 
 ---
 
 ## TIER 8 — Visual Design
 
-### VD-01 — Dark mode
-Tailwind CSS change ~30 minutes. High priority as evening research tool.
+### VD-04 — Filter bar labels (not yet specced)
+Current icon dropdowns are unlabelled. 5-minute fix.
 
-### VD-02 — Card hover states
-Subtle elevation + border highlight on hover.
-
-### VD-03 — Filter bar labels
-Current icon dropdowns are cryptic. Label them explicitly.
-
-### VD-04 — Currency consistency
-Cards mix EUR and DKK. Either normalize to DKK or make currency explicit per listing.
-
-### VD-05 — Image quality
-Some images are dealer watermark collages. Enforce consistent aspect ratio and fallback placeholder.
+### VD-05 — Currency consistency (not yet specced)
+Cards mix EUR and DKK. Normalise or make explicit per listing.
 
 ---
 
-## Future / Backlog
+## Future / Backlog (ambitious, not yet specced)
 
-- **Email negotiation agent** — `contact_log` table already exists. Agent drafts initial offer email based on TCO analysis and days on market
-- **Depreciation curve builder** — Build model-specific curves from scraped historical data (replaces Tier 2 heuristics)
-- **mobile.de scraper** — Blocked by Akamai currently. Revisit with Apify actor
-- **Price alerts** — Notify when a saved car drops in price
-- **User accounts** — Replace localStorage favorites with Supabase auth
+- **Email negotiation agent** — contact_log table ready, agent drafts offer
+  based on TCO, days-on-market, price drop history
+- **Depreciation curve builder** — auto-build Tier 1 curves from
+  accumulated price_history data. Currently all Tier 2.
+- **mobile.de scraper** — blocked by Akamai. Revisit with Apify actor.
+- **Price drop alerts** — notify when a favorited car drops in price
+- **CO2 / ejerafgift in running costs** — annual road tax currently excluded.
+  15,000–25,000 DKK/year for high-emission ICE cars.
+- **Real insurance quotes** — replace flat % estimate with Tryg/Topdanmark API
+- **Comparison share link** — /compare?ids=abc,def,ghi bookmarkable
+- **Export to PDF** — "Download TCO analysis" for this car and scenario
+- **Bilbasen flexlease listings** — separate search URL, not yet scraped
+- **User accounts** — Supabase Auth to replace localStorage session_id
+- **WLTP correction factor** — real-world consumption 15–25% above WLTP for EVs
+- **Dealer trust score** — aggregate negotiability signals per dealer
