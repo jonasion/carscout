@@ -84,30 +84,6 @@ function InsightNote({ text }: { text: string }) {
     )
 }
 
-function generateInsights(result: CarComparisonResult): string[] {
-    const insights: string[] = []
-    const best = result.purchase[result.bestPurchaseOrigin]
-    const flex = result.flexlease
-
-    if (best && flex) {
-        const diff = Math.abs(best.monthlyEquivalent - flex.monthlyEquivalent)
-        const maxVal = Math.max(best.monthlyEquivalent, flex.monthlyEquivalent)
-        if (maxVal > 0 && diff / maxVal > 0.25) {
-            if (flex.monthlyEquivalent > best.monthlyEquivalent) {
-                insights.push('Stor forskel: leasing er markant dyrere end køb pga. høj nedskrivning på grundværdi + moms.')
-            } else {
-                insights.push('Stor forskel: køb er markant dyrere — høj registreringsafgift driver totalpris op.')
-            }
-        }
-    }
-
-    if (flex && flex.depreciationPct > 40) {
-        insights.push(`Høj nedskrivning (${pct(flex.depreciationPct)}) — overvej kortere leasingperiode.`)
-    }
-
-    return insights
-}
-
 function PurchaseSection({ result, bankRate }: {
     result: CarComparisonResult; bankRate: number
 }) {
@@ -188,7 +164,10 @@ function FlexleaseSection({ result }: { result: CarComparisonResult }) {
             {f.listedMonthlyPayment && (
                 <Row label="Annonceret ydelse" value={`${fmt(f.listedMonthlyPayment)} kr/md`} />
             )}
-            <Row label="Førstegangsydelse" value={`${fmt(f.downPayment)} kr`} />
+            <Row label={`Førstegangsydelse${f.autoMatched ? ' (auto)' : ''}`} tooltip={f.autoMatched ? 'Automatisk sat lig forventet nedskrivning' : undefined} value={`${fmt(f.downPayment)} kr`} />
+            {f.downPaymentSurplus > 0 && (
+                <Row label="Heraf refunderbart overskud" value={`${fmt(f.downPaymentSurplus)} kr`} />
+            )}
             <Row label={`Restværdi (${pct(100 - f.depreciationPct)})`}
                 tooltip="Forventet værdi ved leasingens udløb. Hvis markedsværdien er lavere, bærer du risikoen."
                 value={`${fmt(f.restvaerdiInclMoms)} kr`} />
@@ -282,7 +261,7 @@ export function CarColumn({ result, isLowestPurchase, isLowestFlexlease, isLowes
     const leaseTermMonths = result.flexlease.leaseTermMonths
     const bestPurchase = result.purchase[result.bestPurchaseOrigin]
     const bestOriginLabel = originShortLabels[result.bestPurchaseOrigin]
-    const insights = generateInsights(result)
+    const insights = result.insights
 
     return (
         <div className="min-w-[340px] max-w-[380px] border border-border rounded-xl bg-card overflow-hidden flex flex-col">

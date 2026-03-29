@@ -1,4 +1,5 @@
 export type Origin = 'dk_registered' | 'dk_exlease' | 'de_import' | 'de_import_exlease'
+export type DownPaymentMode = 'fixed' | 'percent'
 
 export interface ComparisonCar {
     id: string
@@ -23,13 +24,19 @@ export interface ComparisonCar {
 }
 
 export interface ComparisonSettings {
-    // Loan (purchase)
-    loanTermMonths: number             // 48, 60, 72, 84
+    // Purchase
+    downPaymentMode: DownPaymentMode
+    downPaymentFixed: number
+    downPaymentPercent: number
+    loanTermMonths: number
     bankInterestRate: number
-    downPayment: number
     loanEstablishmentFee: number
-    // Lease (flexlease)
-    leaseTermMonths: number            // 6, 12, 24, 36
+    // Flexlease
+    leaseDownPaymentMode: DownPaymentMode
+    leaseDownPaymentFixed: number
+    leaseDownPaymentPercent: number
+    autoMatchLeaseDown: boolean
+    leaseTermMonths: number
     leasingFinanceRate: number
     stateResidualRate: number
     leaseEstablishmentFee: number
@@ -37,7 +44,7 @@ export interface ComparisonSettings {
     // General
     depreciationRate: number
     eurToDkkRate: number
-    // Registration tax config
+    // Registration tax
     regTaxBaseDeduction: number
     regTaxBracket1Pct: number
     regTaxBracket1Max: number
@@ -46,7 +53,7 @@ export interface ComparisonSettings {
     regTaxBracket3Pct: number
     evDeductionDkk: number
     evDiscountPct2026: number
-    // Corporate cost model
+    // Corporate
     marginalTaxRate: number
     miljoeFactor: number
     beskatningBracket1Pct: number
@@ -97,6 +104,8 @@ export interface FlexleaseBreakdown {
     depreciationPct: number
     restvaerdiInclMoms: number
     downPayment: number
+    downPaymentSurplus: number
+    autoMatched: boolean
     tcoTotal: number
     monthlyEquivalent: number
     listedMonthlyPayment: number | null
@@ -108,7 +117,6 @@ export interface CompanyFlexleaseBreakdown {
     fullRegistrationTax: number
     vehicleAgeMonths: number
     leaseTermMonths: number
-    // Company cost (ex moms)
     companyCostMonthlyExMoms: number
     monthlyFlexTax: number
     monthlyStateInterest: number
@@ -116,13 +124,11 @@ export interface CompanyFlexleaseBreakdown {
     monthlyAdminFee: number
     totalMonthlyExMoms: number
     establishmentFeeExMoms: number
-    // Company depreciation
     depreciationExMoms: number
     depreciationPct: number
     restvaerdiExMoms: number
     companyTotalCost: number
     companyMonthlyCostIncDepreciation: number
-    // Employee taxation
     beskatningsgrundlag: number
     annualTaxableBenefit: number
     miljoeTillaeg: number
@@ -147,13 +153,20 @@ export interface CarComparisonResult {
     bestPurchaseOrigin: Origin
     flexlease: FlexleaseBreakdown
     companyFlexlease: CompanyFlexleaseBreakdown
+    insights: string[]
 }
 
 export const DEFAULT_SETTINGS: ComparisonSettings = {
+    downPaymentMode: 'fixed',
+    downPaymentFixed: 200000,
+    downPaymentPercent: 20,
     loanTermMonths: 60,
     bankInterestRate: 4.0,
-    downPayment: 200000,
     loanEstablishmentFee: 5000,
+    leaseDownPaymentMode: 'fixed',
+    leaseDownPaymentFixed: 50000,
+    leaseDownPaymentPercent: 10,
+    autoMatchLeaseDown: true,
     leaseTermMonths: 24,
     leasingFinanceRate: 4.5,
     stateResidualRate: 3.8,

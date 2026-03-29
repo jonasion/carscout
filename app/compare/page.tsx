@@ -135,15 +135,20 @@ export default function ComparePage() {
           </div>
         </div>
       </header>
-      <div className="flex">
+        {/* Settings slide-over */}
         {showSettings && (
-          <aside className="w-72 shrink-0 border-r border-border bg-card p-4 overflow-y-auto sticky top-[57px] h-[calc(100vh-57px)]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-foreground">{t('label.settings')}</h2>
-              <button onClick={() => setShowSettings(false)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+          <div className="fixed inset-0 z-[90] flex justify-end" onClick={() => setShowSettings(false)}>
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="relative w-80 max-w-full bg-card border-l border-border overflow-y-auto h-full p-4 shadow-xl" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-foreground">{t('label.settings')}</h2>
+                <button onClick={() => setShowSettings(false)} className="text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <SettingsPanel settings={settings} onChange={handleSettingsChange} />
             </div>
-            <SettingsPanel settings={settings} onChange={handleSettingsChange} />
-          </aside>
+          </div>
         )}
         <div className="flex-1 overflow-x-auto p-4 sm:p-6">
           {loading ? (
@@ -172,7 +177,6 @@ export default function ComparePage() {
             </div>
           )}
         </div>
-      </div>
       {showAddModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={() => setShowAddModal(false)}>
           <div className="w-full max-w-lg max-h-[80vh] rounded-xl border border-border bg-card shadow-xl flex flex-col" onClick={(e: React.MouseEvent) => e.stopPropagation()}>

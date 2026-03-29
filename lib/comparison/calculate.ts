@@ -5,6 +5,24 @@ import type {
 } from './types'
 
 // ============================================================
+// HELPERS
+// ============================================================
+
+function resolveDownPayment(
+    mode: 'fixed' | 'percent',
+    fixed: number,
+    percent: number,
+    carPrice: number
+): number {
+    const raw = mode === 'percent' ? Math.round(carPrice * (percent / 100)) : fixed
+    return Math.max(0, Math.min(raw, carPrice))
+}
+
+function pct(num: number): string {
+    return `${num.toFixed(1)}%`
+}
+
+// ============================================================
 // REGISTRATION TAX — 2026 rules
 // ============================================================
 
@@ -191,7 +209,7 @@ function calculateBeskatning(
 }
 
 // ============================================================
-// PURCHASE — private only, uses loanTermMonths
+// PURCHASE — private only
 // ============================================================
 
 function calculatePurchase(
@@ -227,21 +245,17 @@ function calculatePurchase(
 
     const totalPriceOnPlates = baseValueDkk + momsAmount + registrationTax + importCosts
 
-    const downPayment = Math.min(settings.downPayment, totalPriceOnPlates)
+    const downPayment = resolveDownPayment(
+        settings.downPaymentMode, settings.downPaymentFixed, settings.downPaymentPercent, totalPriceOnPlates
+    )
     const bankLoan = totalPriceOnPlates - downPayment
     const loanTermMonths = settings.loanTermMonths
-    const loanYears = loanTermMonths / 12
-    const interestCost = Math.round(bankLoan * (settings.bankInterestRate / 100) * loanYears)
+    const interestForPeriod = Math.round(bankLoan * (settings.bankInterestRate / 100) * (settings.leaseTermMonths / 12))
 
-    // Depreciation over the LEASE comparison period (not loan term)
-    // TCO is measured over leaseTermMonths for apples-to-apples comparison
     const residualPct = getResidualPct(fuelType, settings.leaseTermMonths)
     const depreciation = Math.round(totalPriceOnPlates * (1 - residualPct))
-    const depreciationPct = totalPriceOnPlates > 0 ? ((1 - residualPct) * 100) : 0
+    const depreciationPct = (1 - residualPct) * 100
     const restvaerdi = totalPriceOnPlates - depreciation
-
-    // Interest cost scaled to comparison period (not full loan term)
-    const interestForPeriod = Math.round(bankLoan * (settings.bankInterestRate / 100) * (settings.leaseTermMonths / 12))
 
     const tcoTotal = depreciation + interestForPeriod + settings.loanEstablishmentFee
     const monthlyEquivalent = Math.round(tcoTotal / settings.leaseTermMonths)
@@ -270,7 +284,7 @@ function calculatePurchase(
 }
 
 // ============================================================
-// FLEXLEASE — private, uses leaseTermMonths + downPayment
+// FLEXLEASE — private, with surplus logic
 // ============================================================
 
 function calculateFlexlease(
@@ -309,28 +323,47 @@ function calculateFlexlease(
 
     const establishmentFeeInclMoms = Math.round(settings.leaseEstablishmentFee * 1.25)
 
-    // Apply user's down payment as førstegangsydelse
-    const downPayment = listedDownPayment ?? settings.downPayment
-
+    // Depreciation on base value (incl moms for private)
     const residualPct = getResidualPct(fuelType, leaseTermMonths)
     const depreciationExMoms = baseValueDkk * (1 - residualPct)
     const depreciationInclMoms = Math.round(depreciationExMoms * 1.25)
     const depreciationPct = (1 - residualPct) * 100
     const restvaerdiInclMoms = Math.round(baseValueDkk * residualPct * 1.25)
 
+    // Resolve down payment: auto-match to depreciation or use user input
+    let downPayment: number
+    let autoMatched = false
+
+    if (listedDownPayment != null && listedDownPayment > 0) {
+        downPayment = listedDownPayment
+    } else if (settings.autoMatchLeaseDown) {
+        downPayment = depreciationInclMoms
+        autoMatched = true
+    } else {
+        downPayment = resolveDownPayment(
+            settings.leaseDownPaymentMode, settings.leaseDownPaymentFixed,
+            settings.leaseDownPaymentPercent, baseValueDkk * 1.25
+        )
+    }
+
+    // Surplus logic: if down payment > depreciation, surplus is refundable
+    const downPaymentSurplus = Math.max(0, downPayment - depreciationInclMoms)
+    const effectiveDepreciationCost = Math.min(downPayment, depreciationInclMoms)
+
+    // TCO = actual depreciation cost + monthly payments + fees (surplus is NOT a sunk cost)
     const hasListedPayment = listedMonthlyPayment != null && listedMonthlyPayment > 0
     const totalLeasePayments = actualMonthly * leaseTermMonths
     const tcoTotal = Math.round(
-        downPayment +
+        effectiveDepreciationCost +
         establishmentFeeInclMoms +
         totalLeasePayments +
-        (hasListedPayment ? 0 : depreciationInclMoms)
+        (hasListedPayment ? 0 : 0) // depreciation already counted via effectiveDepreciationCost
     )
     const monthlyEquivalent = Math.round(tcoTotal / leaseTermMonths)
 
     const notes = hasListedPayment
         ? `Monthly from listing. ${taxResult.notes}`
-        : `Computed: age ${vehicleAgeMonths}mo. ${taxResult.notes}`
+        : `Computed: age ${vehicleAgeMonths}mo. ${autoMatched ? 'Auto-match førstegangsydelse.' : ''} ${taxResult.notes}`
 
     const monthlyFlexTax = fullRegistrationTax * getFlexTaxBracketRate(vehicleAgeMonths)
 
@@ -353,6 +386,8 @@ function calculateFlexlease(
         depreciationPct,
         restvaerdiInclMoms,
         downPayment,
+        downPaymentSurplus,
+        autoMatched,
         tcoTotal,
         monthlyEquivalent,
         listedMonthlyPayment,
@@ -361,7 +396,7 @@ function calculateFlexlease(
 }
 
 // ============================================================
-// FLEXLEASE — company, with depreciation
+// FLEXLEASE — company
 // ============================================================
 
 function calculateCompanyFlexlease(
@@ -391,21 +426,16 @@ function calculateCompanyFlexlease(
 
     const establishmentFeeExMoms = settings.leaseEstablishmentFee
 
-    // Company depreciation (ex moms — company owns the residual risk)
     const residualPct = getResidualPct(fuelType, leaseTermMonths)
     const depreciationExMoms = Math.round(baseValueDkk * (1 - residualPct))
     const depreciationPct = (1 - residualPct) * 100
     const restvaerdiExMoms = Math.round(baseValueDkk * residualPct)
 
-    // Company total = monthly payments + establishment + depreciation
     const companyTotalCost = Math.round(
-        (companyCostMonthlyExMoms * leaseTermMonths) +
-        establishmentFeeExMoms +
-        depreciationExMoms
+        (companyCostMonthlyExMoms * leaseTermMonths) + establishmentFeeExMoms + depreciationExMoms
     )
     const companyMonthlyCostIncDepreciation = Math.round(companyTotalCost / leaseTermMonths)
 
-    // Employee beskatning
     const beskatning = calculateBeskatning(baseValueDkk, momsForTax, fullRegistrationTax, settings)
 
     return {
@@ -433,6 +463,44 @@ function calculateCompanyFlexlease(
         marginalTaxRate: settings.marginalTaxRate,
         notes: `Age ${vehicleAgeMonths}mo. ${taxResult.notes}`,
     }
+}
+
+// ============================================================
+// INSIGHTS
+// ============================================================
+
+function generateInsights(
+    bestPurchase: PurchaseBreakdown | undefined,
+    flexlease: FlexleaseBreakdown,
+    companyFlexlease: CompanyFlexleaseBreakdown
+): string[] {
+    const insights: string[] = []
+
+    if (bestPurchase) {
+        const diff = Math.abs(bestPurchase.monthlyEquivalent - flexlease.monthlyEquivalent)
+        const maxVal = Math.max(bestPurchase.monthlyEquivalent, flexlease.monthlyEquivalent)
+        if (maxVal > 0 && diff / maxVal > 0.25) {
+            if (flexlease.monthlyEquivalent > bestPurchase.monthlyEquivalent) {
+                insights.push('Stor forskel: leasing er markant dyrere end køb pga. høj nedskrivning på grundværdi + moms.')
+            } else {
+                insights.push('Stor forskel: køb er markant dyrere — høj registreringsafgift driver totalpris op.')
+            }
+        }
+    }
+
+    if (flexlease.depreciationPct > 40) {
+        insights.push(`Høj nedskrivning (${pct(flexlease.depreciationPct)}) — overvej kortere leasingperiode.`)
+    }
+
+    if (flexlease.downPaymentSurplus > 0) {
+        insights.push(`Førstegangsydelse overstiger nedskrivning med ${new Intl.NumberFormat('da-DK').format(flexlease.downPaymentSurplus)} kr — overskud refunderes ved exit.`)
+    }
+
+    if (flexlease.autoMatched) {
+        insights.push('Førstegangsydelse sat lig forventet nedskrivning (auto-match).')
+    }
+
+    return insights
 }
 
 // ============================================================
@@ -471,6 +539,8 @@ export function computeCarComparison(
         priceDkk, car.fuel_type, car.co2_g_km, car.first_registration_year, settings
     )
 
+    const insights = generateInsights(purchase[bestPurchaseOrigin], flexlease, companyFlexlease)
+
     return {
         car,
         priceDkk,
@@ -479,5 +549,6 @@ export function computeCarComparison(
         bestPurchaseOrigin,
         flexlease,
         companyFlexlease,
+        insights,
     }
 }
