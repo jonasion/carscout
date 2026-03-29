@@ -36,6 +36,13 @@ const originLabels: Record<Origin, { da: string; en: string }> = {
     de_import_exlease: { da: 'DE import (ex-leasing)', en: 'DE import (ex-lease)' },
 }
 
+const originShortLabels: Record<Origin, string> = {
+    dk_registered: 'DK reg.',
+    dk_exlease: 'DK ex-lease',
+    de_import: 'Brugtmoms',
+    de_import_exlease: 'Ex-lease',
+}
+
 function Row({ label, tooltip, value, highlight, bold, separator, na }: {
     label: string
     tooltip?: string
@@ -73,7 +80,7 @@ function Accordion({ title, defaultOpen, children }: {
                 onClick={() => setOpen(!open)}
                 className="w-full flex items-center justify-between px-2 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-                <span>Se beregningsdetaljer</span>
+                <span>{title}</span>
                 {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             </button>
             {open && <div>{children}</div>}
@@ -81,11 +88,12 @@ function Accordion({ title, defaultOpen, children }: {
     )
 }
 
-function PurchaseSection({ result, durationMonths, bankRate }: {
-    result: CarComparisonResult; durationMonths: number; bankRate: number
+function PurchaseSection({ result, bankRate }: {
+    result: CarComparisonResult; bankRate: number
 }) {
     const { locale, t } = useLocale()
     const origins = result.origins
+    const leaseTermMonths = result.flexlease.leaseTermMonths
 
     return (
         <div className="space-y-1">
@@ -96,26 +104,20 @@ function PurchaseSection({ result, durationMonths, bankRate }: {
                 const showMoms = origin === 'dk_exlease' || origin === 'de_import_exlease'
                 const showImport = origin === 'de_import' || origin === 'de_import_exlease'
                 const showRegTax = origin !== 'dk_registered'
-
-                // Depreciation info
-                const depPct = p.totalPriceOnPlates > 0
-                    ? ((p.depreciation / p.totalPriceOnPlates) * 100)
-                    : 0
-                const restvaerdi = p.totalPriceOnPlates - p.depreciation
+                const isBest = origin === result.bestPurchaseOrigin
 
                 return (
                     <div key={origin} className="space-y-0">
-                        <div className="px-2 py-1.5 text-xs font-medium text-primary uppercase tracking-wide">
+                        <div className="px-2 py-1.5 text-xs font-medium text-primary uppercase tracking-wide flex items-center gap-1">
                             {label}
+                            {isBest && origins.length > 1 && <span className="text-[9px] text-emerald-400 font-normal">(billigst)</span>}
                             <TooltipIcon text={t(`tooltip.${origin.replace(/-/g, '_')}`)} />
                         </div>
 
-                        {/* Always visible: key numbers */}
                         <Row label="Totalpris på plader" tooltip={t('tooltip.totalpris_paa_plader')} value={`${fmt(p.totalPriceOnPlates)} kr`} bold />
-                        <Row label={`TCO ${durationMonths} mdr`} value={`${fmt(p.tcoTotal)} kr`} bold separator highlight />
+                        <Row label={`TCO ${leaseTermMonths} mdr`} value={`${fmt(p.tcoTotal)} kr`} bold separator highlight />
                         <Row label="≈ månedlig" value={`${fmt(p.monthlyEquivalent)} kr/md`} bold />
 
-                        {/* Collapsible detail */}
                         <Accordion title="Se beregningsdetaljer">
                             <Row label="Markedsværdi ex. afgift" value={`${fmt(p.baseValue)} kr`} />
                             <Row label="Moms 25%" tooltip={t('tooltip.dk_exlease')} value={`${fmt(p.momsAmount)} kr`} na={!showMoms} />
@@ -127,12 +129,14 @@ function PurchaseSection({ result, durationMonths, bankRate }: {
                             <Row label="Importomkostninger" value={`${fmt(p.importCosts)} kr`} na={!showImport} />
 
                             <div className="px-2 py-1 mt-1 text-xs font-medium text-muted-foreground uppercase tracking-wide border-t border-border">
-                                Finansiering
+                                Finansiering (lån: {p.loanTermMonths} mdr)
                             </div>
                             <Row label="Udbetaling" value={`${fmt(p.downPayment)} kr`} />
                             <Row label="Banklån" value={`${fmt(p.bankLoan)} kr`} />
                             <Row label={`Renteomkostninger (${pct(bankRate)})`} value={`${fmt(p.interestCost)} kr`} />
-                            <Row label={`Nedskrivning (${pct(depPct)})`} tooltip={`${t('tooltip.nedskrivning')} Restværdi: ${fmt(restvaerdi)} kr`} value={`${fmt(p.depreciation)} kr`} />
+                            <Row label={`Nedskrivning (${pct(p.depreciationPct)})`}
+                                tooltip={`${t('tooltip.nedskrivning')} Restværdi: ${fmt(p.restvaerdi)} kr`}
+                                value={`${fmt(p.depreciation)} kr`} />
                             <Row label="Oprettelsesgebyr" value={`${fmt(p.establishmentFee)} kr`} />
                         </Accordion>
 
@@ -144,9 +148,7 @@ function PurchaseSection({ result, durationMonths, bankRate }: {
     )
 }
 
-function FlexleaseSection({ result, durationMonths }: {
-    result: CarComparisonResult; durationMonths: number
-}) {
+function FlexleaseSection({ result }: { result: CarComparisonResult }) {
     const { t } = useLocale()
     const f = result.flexlease
 
@@ -157,27 +159,19 @@ function FlexleaseSection({ result, durationMonths }: {
         ? 'Skifter sats i perioden'
         : `${(f.taxBracketBreakdown[0]?.rate ?? 0) * 100}% sats`
 
-    // Depreciation info
-    const depPct = f.baseValue > 0
-        ? ((f.depreciationInclMoms / (f.baseValue * 1.25)) * 100)
-        : 0
-    const restvaerdiInclMoms = Math.round(f.baseValue * 1.25) - f.depreciationInclMoms
-
     return (
         <div className="space-y-0">
             <div className="px-2 py-1.5 text-xs font-medium text-primary uppercase tracking-wide">
-                Flexleasing (privat)
+                Flexleasing (privat) — {f.leaseTermMonths} mdr
             </div>
 
-            {/* Always visible: key numbers */}
             <Row label="Månedlig inkl. moms" value={`${fmt(f.totalMonthlyInclMoms)} kr/md`} bold />
             {f.listedMonthlyPayment && (
                 <Row label="Annonceret ydelse" value={`${fmt(f.listedMonthlyPayment)} kr/md`} />
             )}
-            <Row label={`TCO ${durationMonths} mdr`} value={`${fmt(f.tcoTotal)} kr`} bold separator highlight />
+            <Row label={`TCO ${f.leaseTermMonths} mdr`} value={`${fmt(f.tcoTotal)} kr`} bold separator highlight />
             <Row label="≈ månedlig" value={`${fmt(f.monthlyEquivalent)} kr/md`} bold />
 
-            {/* Collapsible detail */}
             <Accordion title="Se beregningsdetaljer">
                 <Row label="Markedsværdi ex. afgift" value={`${fmt(f.baseValue)} kr`} />
                 <Row label="Fuld registreringsafgift" tooltip={t('tooltip.fuld_registreringsafgift')} value={`${fmt(f.fullRegistrationTax)} kr`} />
@@ -200,17 +194,15 @@ function FlexleaseSection({ result, durationMonths }: {
 
                 <Row label="Førstegangsydelse" tooltip={t('tooltip.foerstegangsydelse')} value={`${fmt(f.downPayment)} kr`} />
                 <Row label="Oprettelse inkl. moms" value={`${fmt(f.establishmentFeeInclMoms)} kr`} />
-                <Row label={`Nedskrivning inkl. moms (${pct(depPct)})`}
-                    tooltip={`${t('tooltip.nedskrivning')} Restværdi: ${fmt(restvaerdiInclMoms)} kr`}
+                <Row label={`Nedskrivning inkl. moms (${pct(f.depreciationPct)})`}
+                    tooltip={`${t('tooltip.nedskrivning')} Restværdi: ${fmt(f.restvaerdiInclMoms)} kr`}
                     value={`${fmt(f.depreciationInclMoms)} kr`} />
             </Accordion>
         </div>
     )
 }
 
-function CompanyFlexleaseSection({ result, durationMonths }: {
-    result: CarComparisonResult; durationMonths: number
-}) {
+function CompanyFlexleaseSection({ result }: { result: CarComparisonResult }) {
     const { t } = useLocale()
     const c = result.companyFlexlease
 
@@ -221,15 +213,16 @@ function CompanyFlexleaseSection({ result, durationMonths }: {
     return (
         <div className="space-y-0">
             <div className="px-2 py-1.5 text-xs font-medium text-primary uppercase tracking-wide">
-                Erhvervsleasing
+                Erhvervsleasing — {c.leaseTermMonths} mdr
             </div>
 
-            {/* Always visible: the two key numbers */}
             <Row label="Virksomhedens ydelse ex. moms" value={`${fmt(c.companyCostMonthlyExMoms)} kr/md`} bold />
+            <Row label={`Virksomhedens TCO inkl. nedskrivning`}
+                tooltip="Samlet virksomhedsomkostning inkl. månedlige ydelser, oprettelse og nedskrivning over perioden"
+                value={`${fmt(c.companyMonthlyCostIncDepreciation)} kr/md`} bold />
             <Row label={`Din nettopris (${Math.round(c.marginalTaxRate * 100)}% skat)`}
                 value={`${fmt(c.employeeNetCostMonthly)} kr/md`} bold highlight />
 
-            {/* Collapsible detail */}
             <Accordion title="Se beregningsdetaljer">
                 <div className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide border-t border-border">
                     Virksomhedens omkostning
@@ -241,13 +234,17 @@ function CompanyFlexleaseSection({ result, durationMonths }: {
                 <Row label="Administrationsgebyr/md" value={`${fmt(c.monthlyAdminFee)} kr`} />
                 <Row label="Månedlig ydelse ex. moms" value={`${fmt(c.companyCostMonthlyExMoms)} kr/md`} bold separator />
                 <Row label="Oprettelse ex. moms" value={`${fmt(c.establishmentFeeExMoms)} kr`} />
+                <Row label={`Nedskrivning ex. moms (${pct(c.depreciationPct)})`}
+                    tooltip={`${t('tooltip.nedskrivning')} Restværdi: ${fmt(c.restvaerdiExMoms)} kr`}
+                    value={`${fmt(c.depreciationExMoms)} kr`} />
+                <Row label={`Samlet virksomhed ${c.leaseTermMonths} mdr`}
+                    value={`${fmt(c.companyTotalCost)} kr`} bold separator highlight />
 
                 <div className="px-2 py-1 mt-1 text-xs font-medium text-muted-foreground uppercase tracking-wide border-t border-border">
                     Medarbejderens beskatning
                 </div>
 
-                <Row label="Beskatningsgrundlag"
-                    tooltip={`${t('tooltip.beskatningsgrundlag')} ${ageNote}`}
+                <Row label="Beskatningsgrundlag" tooltip={`${t('tooltip.beskatningsgrundlag')} ${ageNote}`}
                     value={`${fmt(c.beskatningsgrundlag)} kr`} />
                 <div className="px-2 py-0.5 text-[10px] text-muted-foreground/70 italic">{ageNote}</div>
                 <Row label="Årlig skattepligtig fordel" value={`${fmt(c.annualTaxableBenefit)} kr`} />
@@ -262,13 +259,13 @@ function CompanyFlexleaseSection({ result, durationMonths }: {
 }
 
 export function CarColumn({ result, isLowestPurchase, isLowestFlexlease, isLowestCompanyFlex, bankRate, onRemove }: CarColumnProps) {
+    const { locale } = useLocale()
     const car = result.car
     const flag = countryFlags[car.country] || ''
-    const durationMonths = result.flexlease.durationMonths
+    const leaseTermMonths = result.flexlease.leaseTermMonths
 
-    const bestPurchaseMonthly = Math.min(
-        ...result.origins.map(o => result.purchase[o]?.monthlyEquivalent ?? Infinity)
-    )
+    const bestPurchase = result.purchase[result.bestPurchaseOrigin]
+    const bestOriginLabel = originShortLabels[result.bestPurchaseOrigin]
 
     return (
         <div className="min-w-[320px] border border-border rounded-xl bg-card overflow-hidden">
@@ -304,39 +301,33 @@ export function CarColumn({ result, isLowestPurchase, isLowestFlexlease, isLowes
                 </div>
             </div>
 
-            {/* TCO Summary — 3 columns with clarifying subtitles */}
+            {/* TCO Summary — 3 cards with clear labels */}
             <div className="grid grid-cols-3 border-b border-border">
                 <div className={`p-2 text-center ${isLowestPurchase ? 'bg-emerald-500/10' : ''}`}>
                     <p className="text-[10px] text-muted-foreground">Privat køb</p>
-                    <p className={`text-base font-bold ${isLowestPurchase ? 'text-emerald-400' : 'text-foreground'}`}>{fmt(bestPurchaseMonthly)}</p>
+                    <p className="text-[8px] text-muted-foreground/60">{bestOriginLabel}</p>
+                    <p className={`text-base font-bold ${isLowestPurchase ? 'text-emerald-400' : 'text-foreground'}`}>{fmt(bestPurchase?.monthlyEquivalent)}</p>
                     <p className="text-[10px] text-muted-foreground">kr/md fuld TCO</p>
                 </div>
                 <div className={`p-2 text-center border-l border-border ${isLowestFlexlease ? 'bg-emerald-500/10' : ''}`}>
                     <p className="text-[10px] text-muted-foreground">Privat flex</p>
+                    <p className="text-[8px] text-muted-foreground/60">{leaseTermMonths} mdr</p>
                     <p className={`text-base font-bold ${isLowestFlexlease ? 'text-emerald-400' : 'text-foreground'}`}>{fmt(result.flexlease.monthlyEquivalent)}</p>
                     <p className="text-[10px] text-muted-foreground">kr/md fuld TCO</p>
                 </div>
                 <div className={`p-2 text-center border-l border-border ${isLowestCompanyFlex ? 'bg-emerald-500/10' : ''}`}>
                     <p className="text-[10px] text-muted-foreground">Erhverv flex</p>
+                    <p className="text-[8px] text-muted-foreground/60">{leaseTermMonths} mdr</p>
                     <p className={`text-base font-bold ${isLowestCompanyFlex ? 'text-emerald-400' : 'text-foreground'}`}>{fmt(result.companyFlexlease.employeeNetCostMonthly)}</p>
                     <p className="text-[10px] text-muted-foreground">kr/md din skat</p>
                 </div>
             </div>
-            <div className="px-2 py-1 text-center text-[9px] text-muted-foreground/60 border-b border-border">
-                Periode: {durationMonths} måneder
-            </div>
 
             {/* Detailed breakdowns */}
             <div className="divide-y divide-border">
-                <div className="py-2">
-                    <PurchaseSection result={result} durationMonths={durationMonths} bankRate={bankRate} />
-                </div>
-                <div className="py-2">
-                    <FlexleaseSection result={result} durationMonths={durationMonths} />
-                </div>
-                <div className="py-2">
-                    <CompanyFlexleaseSection result={result} durationMonths={durationMonths} />
-                </div>
+                <div className="py-2"><PurchaseSection result={result} bankRate={bankRate} /></div>
+                <div className="py-2"><FlexleaseSection result={result} /></div>
+                <div className="py-2"><CompanyFlexleaseSection result={result} /></div>
             </div>
         </div>
     )

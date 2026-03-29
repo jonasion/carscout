@@ -23,15 +23,19 @@ export interface ComparisonCar {
 }
 
 export interface ComparisonSettings {
-    durationMonths: number
+    // Loan (purchase)
+    loanTermMonths: number             // 48, 60, 72, 84
     bankInterestRate: number
-    leasingFinanceRate: number
-    stateResidualRate: number
-    depreciationRate: number
     downPayment: number
     loanEstablishmentFee: number
+    // Lease (flexlease)
+    leaseTermMonths: number            // 6, 12, 24, 36
+    leasingFinanceRate: number
+    stateResidualRate: number
     leaseEstablishmentFee: number
     adminFeeMonthly: number
+    // General
+    depreciationRate: number
     eurToDkkRate: number
     // Registration tax config
     regTaxBaseDeduction: number
@@ -42,7 +46,7 @@ export interface ComparisonSettings {
     regTaxBracket3Pct: number
     evDeductionDkk: number
     evDiscountPct2026: number
-    // SPEC-021: corporate cost model
+    // Corporate cost model
     marginalTaxRate: number
     miljoeFactor: number
     beskatningBracket1Pct: number
@@ -63,8 +67,11 @@ export interface PurchaseBreakdown {
     totalPriceOnPlates: number
     downPayment: number
     bankLoan: number
+    loanTermMonths: number
     interestCost: number
     depreciation: number
+    depreciationPct: number
+    restvaerdi: number
     establishmentFee: number
     tcoTotal: number
     monthlyEquivalent: number
@@ -75,7 +82,7 @@ export interface FlexleaseBreakdown {
     baseValue: number
     fullRegistrationTax: number
     vehicleAgeMonths: number
-    durationMonths: number
+    leaseTermMonths: number
     monthlyFlexTax: number
     monthlyFlexTaxAvg: number
     monthlyStateInterest: number
@@ -87,6 +94,8 @@ export interface FlexleaseBreakdown {
     totalFlexTaxOverPeriod: number
     establishmentFeeInclMoms: number
     depreciationInclMoms: number
+    depreciationPct: number
+    restvaerdiInclMoms: number
     downPayment: number
     tcoTotal: number
     monthlyEquivalent: number
@@ -98,7 +107,7 @@ export interface CompanyFlexleaseBreakdown {
     baseValue: number
     fullRegistrationTax: number
     vehicleAgeMonths: number
-    durationMonths: number
+    leaseTermMonths: number
     // Company cost (ex moms)
     companyCostMonthlyExMoms: number
     monthlyFlexTax: number
@@ -107,6 +116,12 @@ export interface CompanyFlexleaseBreakdown {
     monthlyAdminFee: number
     totalMonthlyExMoms: number
     establishmentFeeExMoms: number
+    // Company depreciation
+    depreciationExMoms: number
+    depreciationPct: number
+    restvaerdiExMoms: number
+    companyTotalCost: number
+    companyMonthlyCostIncDepreciation: number
     // Employee taxation
     beskatningsgrundlag: number
     annualTaxableBenefit: number
@@ -129,20 +144,22 @@ export interface CarComparisonResult {
     priceDkk: number
     origins: Origin[]
     purchase: Record<Origin, PurchaseBreakdown>
+    bestPurchaseOrigin: Origin
     flexlease: FlexleaseBreakdown
     companyFlexlease: CompanyFlexleaseBreakdown
 }
 
 export const DEFAULT_SETTINGS: ComparisonSettings = {
-    durationMonths: 12,
+    loanTermMonths: 60,
     bankInterestRate: 4.0,
-    leasingFinanceRate: 4.5,
-    stateResidualRate: 3.8,
-    depreciationRate: 15,
     downPayment: 200000,
     loanEstablishmentFee: 5000,
+    leaseTermMonths: 24,
+    leasingFinanceRate: 4.5,
+    stateResidualRate: 3.8,
     leaseEstablishmentFee: 5000,
     adminFeeMonthly: 300,
+    depreciationRate: 15,
     eurToDkkRate: 7.46,
     regTaxBaseDeduction: 24300,
     regTaxBracket1Pct: 25,
@@ -152,7 +169,6 @@ export const DEFAULT_SETTINGS: ComparisonSettings = {
     regTaxBracket3Pct: 150,
     evDeductionDkk: 165000,
     evDiscountPct2026: 60,
-    // SPEC-021 defaults
     marginalTaxRate: 0.50,
     miljoeFactor: 2.5,
     beskatningBracket1Pct: 25,

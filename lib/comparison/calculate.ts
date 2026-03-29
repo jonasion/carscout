@@ -5,7 +5,7 @@ import type {
 } from './types'
 
 // ============================================================
-// REGISTRATION TAX — 2026 rules (client-side mirror)
+// REGISTRATION TAX — 2026 rules
 // ============================================================
 
 function calculateRegistrationTax(
@@ -95,12 +95,12 @@ function getFlexTaxBracketRate(vehicleAgeMonths: number): number {
 function computeFlexTaxMonthByMonth(
     fullRegistrationTax: number,
     vehicleAgeMonthsAtStart: number,
-    durationMonths: number
+    leaseTermMonths: number
 ): { breakdown: TaxBracketMonth[]; total: number } {
     const breakdown: TaxBracketMonth[] = []
     let total = 0
 
-    for (let m = 0; m < durationMonths; m++) {
+    for (let m = 0; m < leaseTermMonths; m++) {
         const ageAtMonth = vehicleAgeMonthsAtStart + m
         const rate = getFlexTaxBracketRate(ageAtMonth)
         const amount = fullRegistrationTax * rate
@@ -123,7 +123,7 @@ function determineOrigins(car: ComparisonCar): Origin[] {
 }
 
 // ============================================================
-// DEPRECIATION — Tier 2 heuristic (client-side only)
+// DEPRECIATION — Tier 2 heuristic
 // ============================================================
 
 const TIER2_DEPRECIATION: Record<string, number[]> = {
@@ -134,7 +134,7 @@ const TIER2_DEPRECIATION: Record<string, number[]> = {
     phev: [0.80, 0.68, 0.58, 0.51, 0.47],
 }
 
-function getResidualPct(fuelType: string, durationMonths: number): number {
+function getResidualPct(fuelType: string, months: number): number {
     const ft = fuelType?.toLowerCase()
     let segment = 'ice_petrol'
     if (ft === 'el' || ft === 'electric') segment = 'ev_mainstream'
@@ -142,18 +142,18 @@ function getResidualPct(fuelType: string, durationMonths: number): number {
     else if (ft === 'phev' || ft === 'plugin') segment = 'phev'
 
     const curve = TIER2_DEPRECIATION[segment]
-    const years = durationMonths / 12
+    const years = months / 12
     const lowerIdx = Math.max(0, Math.floor(years) - 1)
     const upperIdx = Math.min(curve.length - 1, Math.ceil(years) - 1)
 
-    if (lowerIdx === upperIdx) return curve[lowerIdx]
+    if (lowerIdx === upperIdx) return curve[Math.max(0, lowerIdx)]
 
     const fraction = years - Math.floor(years)
     return curve[lowerIdx] + (curve[upperIdx] - curve[lowerIdx]) * fraction
 }
 
 // ============================================================
-// BESKATNINGSGRUNDLAG — company car benefit taxation
+// BESKATNINGSGRUNDLAG
 // ============================================================
 
 function calculateBeskatning(
@@ -179,7 +179,6 @@ function calculateBeskatning(
 
     const totalAnnualBenefit = annualTaxableBenefit + miljoeTillaeg
     const monthlyTaxableBenefit = Math.round(totalAnnualBenefit / 12)
-
     const employeeNetCostMonthly = Math.round(monthlyTaxableBenefit * settings.marginalTaxRate)
 
     return {
@@ -192,7 +191,7 @@ function calculateBeskatning(
 }
 
 // ============================================================
-// PURCHASE — private only (SPEC-021: company removed)
+// PURCHASE — private only, uses loanTermMonths
 // ============================================================
 
 function calculatePurchase(
@@ -220,9 +219,7 @@ function calculatePurchase(
     let notes = ''
 
     if (origin !== 'dk_registered') {
-        const taxResult = calculateRegistrationTax(
-            afgiftspligtigVaerdi, fuelType, co2GKm, settings
-        )
+        const taxResult = calculateRegistrationTax(afgiftspligtigVaerdi, fuelType, co2GKm, settings)
         registrationTax = taxResult.tax
         evDeductionApplied = taxResult.evDeductionApplied
         notes = taxResult.notes
@@ -232,14 +229,22 @@ function calculatePurchase(
 
     const downPayment = Math.min(settings.downPayment, totalPriceOnPlates)
     const bankLoan = totalPriceOnPlates - downPayment
-    const durationYears = settings.durationMonths / 12
-    const interestCost = Math.round(bankLoan * (settings.bankInterestRate / 100) * durationYears)
+    const loanTermMonths = settings.loanTermMonths
+    const loanYears = loanTermMonths / 12
+    const interestCost = Math.round(bankLoan * (settings.bankInterestRate / 100) * loanYears)
 
-    const residualPct = getResidualPct(fuelType, settings.durationMonths)
+    // Depreciation over the LEASE comparison period (not loan term)
+    // TCO is measured over leaseTermMonths for apples-to-apples comparison
+    const residualPct = getResidualPct(fuelType, settings.leaseTermMonths)
     const depreciation = Math.round(totalPriceOnPlates * (1 - residualPct))
+    const depreciationPct = totalPriceOnPlates > 0 ? ((1 - residualPct) * 100) : 0
+    const restvaerdi = totalPriceOnPlates - depreciation
 
-    const tcoTotal = depreciation + interestCost + settings.loanEstablishmentFee
-    const monthlyEquivalent = Math.round(tcoTotal / settings.durationMonths)
+    // Interest cost scaled to comparison period (not full loan term)
+    const interestForPeriod = Math.round(bankLoan * (settings.bankInterestRate / 100) * (settings.leaseTermMonths / 12))
+
+    const tcoTotal = depreciation + interestForPeriod + settings.loanEstablishmentFee
+    const monthlyEquivalent = Math.round(tcoTotal / settings.leaseTermMonths)
 
     return {
         origin,
@@ -252,8 +257,11 @@ function calculatePurchase(
         totalPriceOnPlates,
         downPayment,
         bankLoan,
-        interestCost,
+        loanTermMonths,
+        interestCost: interestForPeriod,
         depreciation,
+        depreciationPct,
+        restvaerdi,
         establishmentFee: settings.loanEstablishmentFee,
         tcoTotal,
         monthlyEquivalent,
@@ -262,7 +270,7 @@ function calculatePurchase(
 }
 
 // ============================================================
-// FLEXLEASE — private
+// FLEXLEASE — private, uses leaseTermMonths + downPayment
 // ============================================================
 
 function calculateFlexlease(
@@ -276,19 +284,17 @@ function calculateFlexlease(
 ): FlexleaseBreakdown {
 
     const vehicleAgeMonths = getVehicleAgeMonths(firstRegistrationYear)
-    const durationMonths = settings.durationMonths
+    const leaseTermMonths = settings.leaseTermMonths
 
     const momsForTax = Math.round(baseValueDkk * 0.25)
     const afgiftspligtigVaerdi = baseValueDkk + momsForTax
-    const taxResult = calculateRegistrationTax(
-        afgiftspligtigVaerdi, fuelType, co2GKm, settings
-    )
+    const taxResult = calculateRegistrationTax(afgiftspligtigVaerdi, fuelType, co2GKm, settings)
     const fullRegistrationTax = taxResult.tax
 
     const { breakdown: taxBracketBreakdown, total: totalFlexTaxOverPeriod } =
-        computeFlexTaxMonthByMonth(fullRegistrationTax, vehicleAgeMonths, durationMonths)
+        computeFlexTaxMonthByMonth(fullRegistrationTax, vehicleAgeMonths, leaseTermMonths)
 
-    const monthlyFlexTaxAvg = totalFlexTaxOverPeriod / durationMonths
+    const monthlyFlexTaxAvg = totalFlexTaxOverPeriod / leaseTermMonths
 
     const monthlyStateInterest = (fullRegistrationTax * (settings.stateResidualRate / 100)) / 12
     const monthlyFinanceInterest = (baseValueDkk * (settings.leasingFinanceRate / 100)) / 12
@@ -302,21 +308,25 @@ function calculateFlexlease(
         : totalMonthlyInclMoms
 
     const establishmentFeeInclMoms = Math.round(settings.leaseEstablishmentFee * 1.25)
-    const downPayment = listedDownPayment ?? 0
 
-    const residualPct = getResidualPct(fuelType, durationMonths)
+    // Apply user's down payment as førstegangsydelse
+    const downPayment = listedDownPayment ?? settings.downPayment
+
+    const residualPct = getResidualPct(fuelType, leaseTermMonths)
     const depreciationExMoms = baseValueDkk * (1 - residualPct)
     const depreciationInclMoms = Math.round(depreciationExMoms * 1.25)
+    const depreciationPct = (1 - residualPct) * 100
+    const restvaerdiInclMoms = Math.round(baseValueDkk * residualPct * 1.25)
 
     const hasListedPayment = listedMonthlyPayment != null && listedMonthlyPayment > 0
-    const totalLeasePayments = actualMonthly * durationMonths
+    const totalLeasePayments = actualMonthly * leaseTermMonths
     const tcoTotal = Math.round(
         downPayment +
         establishmentFeeInclMoms +
         totalLeasePayments +
         (hasListedPayment ? 0 : depreciationInclMoms)
     )
-    const monthlyEquivalent = Math.round(tcoTotal / durationMonths)
+    const monthlyEquivalent = Math.round(tcoTotal / leaseTermMonths)
 
     const notes = hasListedPayment
         ? `Monthly from listing. ${taxResult.notes}`
@@ -328,7 +338,7 @@ function calculateFlexlease(
         baseValue: baseValueDkk,
         fullRegistrationTax,
         vehicleAgeMonths,
-        durationMonths,
+        leaseTermMonths,
         monthlyFlexTax,
         monthlyFlexTaxAvg,
         monthlyStateInterest,
@@ -340,6 +350,8 @@ function calculateFlexlease(
         totalFlexTaxOverPeriod,
         establishmentFeeInclMoms,
         depreciationInclMoms,
+        depreciationPct,
+        restvaerdiInclMoms,
         downPayment,
         tcoTotal,
         monthlyEquivalent,
@@ -349,7 +361,7 @@ function calculateFlexlease(
 }
 
 // ============================================================
-// FLEXLEASE — company (SPEC-021)
+// FLEXLEASE — company, with depreciation
 // ============================================================
 
 function calculateCompanyFlexlease(
@@ -361,16 +373,13 @@ function calculateCompanyFlexlease(
 ): CompanyFlexleaseBreakdown {
 
     const vehicleAgeMonths = getVehicleAgeMonths(firstRegistrationYear)
-    const durationMonths = settings.durationMonths
+    const leaseTermMonths = settings.leaseTermMonths
 
     const momsForTax = Math.round(baseValueDkk * 0.25)
     const afgiftspligtigVaerdi = baseValueDkk + momsForTax
-    const taxResult = calculateRegistrationTax(
-        afgiftspligtigVaerdi, fuelType, co2GKm, settings
-    )
+    const taxResult = calculateRegistrationTax(afgiftspligtigVaerdi, fuelType, co2GKm, settings)
     const fullRegistrationTax = taxResult.tax
 
-    // Monthly decomposition (ex moms — company reclaims)
     const taxBracketRate = getFlexTaxBracketRate(vehicleAgeMonths)
     const monthlyFlexTax = fullRegistrationTax * taxBracketRate
     const monthlyStateInterest = (fullRegistrationTax * (settings.stateResidualRate / 100)) / 12
@@ -382,16 +391,28 @@ function calculateCompanyFlexlease(
 
     const establishmentFeeExMoms = settings.leaseEstablishmentFee
 
-    // Employee beskatning
-    const beskatning = calculateBeskatning(
-        baseValueDkk, momsForTax, fullRegistrationTax, settings
+    // Company depreciation (ex moms — company owns the residual risk)
+    const residualPct = getResidualPct(fuelType, leaseTermMonths)
+    const depreciationExMoms = Math.round(baseValueDkk * (1 - residualPct))
+    const depreciationPct = (1 - residualPct) * 100
+    const restvaerdiExMoms = Math.round(baseValueDkk * residualPct)
+
+    // Company total = monthly payments + establishment + depreciation
+    const companyTotalCost = Math.round(
+        (companyCostMonthlyExMoms * leaseTermMonths) +
+        establishmentFeeExMoms +
+        depreciationExMoms
     )
+    const companyMonthlyCostIncDepreciation = Math.round(companyTotalCost / leaseTermMonths)
+
+    // Employee beskatning
+    const beskatning = calculateBeskatning(baseValueDkk, momsForTax, fullRegistrationTax, settings)
 
     return {
         baseValue: baseValueDkk,
         fullRegistrationTax,
         vehicleAgeMonths,
-        durationMonths,
+        leaseTermMonths,
         companyCostMonthlyExMoms,
         monthlyFlexTax,
         monthlyStateInterest,
@@ -399,6 +420,11 @@ function calculateCompanyFlexlease(
         monthlyAdminFee,
         totalMonthlyExMoms,
         establishmentFeeExMoms,
+        depreciationExMoms,
+        depreciationPct,
+        restvaerdiExMoms,
+        companyTotalCost,
+        companyMonthlyCostIncDepreciation,
         beskatningsgrundlag: beskatning.beskatningsgrundlag,
         annualTaxableBenefit: beskatning.annualTaxableBenefit,
         miljoeTillaeg: beskatning.miljoeTillaeg,
@@ -410,7 +436,7 @@ function calculateCompanyFlexlease(
 }
 
 // ============================================================
-// MAIN ENTRY — compute all breakdowns for one car
+// MAIN ENTRY
 // ============================================================
 
 export function computeCarComparison(
@@ -424,32 +450,25 @@ export function computeCarComparison(
 
     const origins = determineOrigins(car)
 
-    // Purchase — private only (SPEC-021: company removed)
     const purchase: Record<string, PurchaseBreakdown> = {}
+    let bestPurchaseOrigin: Origin = origins[0]
+    let bestPurchaseMonthly = Infinity
+
     for (const origin of origins) {
-        purchase[origin] = calculatePurchase(
-            priceDkk, origin, car.fuel_type, car.co2_g_km, settings
-        )
+        purchase[origin] = calculatePurchase(priceDkk, origin, car.fuel_type, car.co2_g_km, settings)
+        if (purchase[origin].monthlyEquivalent < bestPurchaseMonthly) {
+            bestPurchaseMonthly = purchase[origin].monthlyEquivalent
+            bestPurchaseOrigin = origin
+        }
     }
 
-    // Flexlease — private
     const flexlease = calculateFlexlease(
-        priceDkk,
-        car.fuel_type,
-        car.co2_g_km,
-        car.first_registration_year,
-        car.lease_monthly_dkk,
-        car.lease_down_payment_dkk,
-        settings
+        priceDkk, car.fuel_type, car.co2_g_km, car.first_registration_year,
+        car.lease_monthly_dkk, car.lease_down_payment_dkk, settings
     )
 
-    // Flexlease — company (split output)
     const companyFlexlease = calculateCompanyFlexlease(
-        priceDkk,
-        car.fuel_type,
-        car.co2_g_km,
-        car.first_registration_year,
-        settings
+        priceDkk, car.fuel_type, car.co2_g_km, car.first_registration_year, settings
     )
 
     return {
@@ -457,6 +476,7 @@ export function computeCarComparison(
         priceDkk,
         origins,
         purchase: purchase as Record<Origin, PurchaseBreakdown>,
+        bestPurchaseOrigin,
         flexlease,
         companyFlexlease,
     }

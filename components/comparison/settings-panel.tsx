@@ -28,6 +28,30 @@ function SettingInput({ label, value, onChange, step, suffix }: {
     )
 }
 
+function PillSelector({ label, value, options, onChange }: {
+    label: string; value: number; options: number[]; onChange: (v: number) => void
+}) {
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-muted-foreground">{label}</label>
+            <div className="flex rounded-lg border border-border overflow-hidden">
+                {options.map((opt) => (
+                    <button
+                        key={opt}
+                        onClick={() => onChange(opt)}
+                        className={`flex-1 py-1.5 text-xs font-medium transition-colors ${value === opt
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-secondary text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        {opt} md
+                    </button>
+                ))}
+            </div>
+        </div>
+    )
+}
+
 export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
     const { t } = useLocale()
 
@@ -37,28 +61,9 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
 
     return (
         <div className="space-y-5">
-            {/* Duration selector */}
-            <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-muted-foreground">{t('label.duration') || 'Varighed'}</label>
-                <div className="flex rounded-lg border border-border overflow-hidden">
-                    {[12, 24, 36].map((m) => (
-                        <button
-                            key={m}
-                            onClick={() => update({ durationMonths: m })}
-                            className={`flex-1 py-1.5 text-sm font-medium transition-colors ${settings.durationMonths === m
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-secondary text-muted-foreground hover:text-foreground'
-                                }`}
-                        >
-                            {m} md
-                        </button>
-                    ))}
-                </div>
-            </div>
-
             {/* Purchase settings */}
             <div className="space-y-3">
-                <p className="text-xs font-medium text-foreground uppercase tracking-wide">Køb</p>
+                <p className="text-xs font-medium text-foreground uppercase tracking-wide">Køb (privat)</p>
                 <SettingInput
                     label={t('label.down_payment')}
                     value={settings.downPayment}
@@ -67,11 +72,17 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
                     suffix="DKK"
                 />
                 <SettingInput
-                    label={t('label.loan_rate') || 'Bankrente'}
+                    label="Bankrente"
                     value={settings.bankInterestRate}
                     onChange={(v) => update({ bankInterestRate: v })}
                     step={0.1}
                     suffix="%"
+                />
+                <PillSelector
+                    label="Løbetid banklån"
+                    value={settings.loanTermMonths}
+                    options={[48, 60, 72, 84]}
+                    onChange={(v) => update({ loanTermMonths: v })}
                 />
                 <SettingInput
                     label="Oprettelsesgebyr"
@@ -84,6 +95,12 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             {/* Flexlease settings */}
             <div className="space-y-3">
                 <p className="text-xs font-medium text-foreground uppercase tracking-wide">Flexleasing</p>
+                <PillSelector
+                    label="Løbetid flexleasing"
+                    value={settings.leaseTermMonths}
+                    options={[6, 12, 24, 36]}
+                    onChange={(v) => update({ leaseTermMonths: v })}
+                />
                 <SettingInput
                     label="Finansieringsrente"
                     value={settings.leasingFinanceRate}
@@ -140,7 +157,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
             <div className="space-y-3">
                 <p className="text-xs font-medium text-foreground uppercase tracking-wide">Generelt</p>
                 <SettingInput
-                    label="Afskrivning"
+                    label="Forventet årlig nedskrivning"
                     value={settings.depreciationRate}
                     onChange={(v) => update({ depreciationRate: v })}
                     step={1}
