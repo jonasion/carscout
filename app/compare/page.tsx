@@ -162,7 +162,7 @@ export default function ComparePage() {
                 const isLowestP = results.length > 1 && bestPurchase === lowestPurchaseMonthly
                 const isLowestF = results.length > 1 && result.flexlease.monthlyEquivalent === lowestFlexleaseMonthly
                 const isLowestCF = results.length > 1 && result.companyFlexlease.employeeNetCostMonthly === lowestCompanyFlexMonthly
-                return (<CarColumn key={result.car.id} result={result} isLowestPurchase={isLowestP} isLowestFlexlease={isLowestF} isLowestCompanyFlex={isLowestCF} onRemove={() => handleRemoveCar(result.car.id)} />)
+                return (<CarColumn key={result.car.id} result={result} isLowestPurchase={isLowestP} isLowestFlexlease={isLowestF} isLowestCompanyFlex={isLowestCF} bankRate={settings.bankInterestRate} onRemove={() => handleRemoveCar(result.car.id)} />)
               })}
               {carIds.length < 5 && results.length > 0 && (
                 <button onClick={handleOpenAddModal} className="min-w-[320px] border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors h-64">
