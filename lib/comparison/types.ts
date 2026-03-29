@@ -23,25 +23,33 @@ export interface ComparisonCar {
 }
 
 export interface ComparisonSettings {
-    durationMonths: number            // 12, 24, or 36
-    bankInterestRate: number          // e.g. 4.0
-    leasingFinanceRate: number        // e.g. 4.5
-    stateResidualRate: number         // e.g. 3.8
-    depreciationRate: number          // e.g. 15 (annual %)
-    downPayment: number               // e.g. 200000
-    loanEstablishmentFee: number      // e.g. 5000
-    leaseEstablishmentFee: number     // e.g. 5000 (ex moms)
-    adminFeeMonthly: number           // e.g. 300
-    eurToDkkRate: number              // e.g. 7.46
+    durationMonths: number
+    bankInterestRate: number
+    leasingFinanceRate: number
+    stateResidualRate: number
+    depreciationRate: number
+    downPayment: number
+    loanEstablishmentFee: number
+    leaseEstablishmentFee: number
+    adminFeeMonthly: number
+    eurToDkkRate: number
     // Registration tax config
-    regTaxBaseDeduction: number       // 24300
-    regTaxBracket1Pct: number         // 25
-    regTaxBracket1Max: number         // 72900
-    regTaxBracket2Pct: number         // 85
-    regTaxBracket2Max: number         // 226500
-    regTaxBracket3Pct: number         // 150
-    evDeductionDkk: number            // 165000
-    evDiscountPct2026: number         // 60
+    regTaxBaseDeduction: number
+    regTaxBracket1Pct: number
+    regTaxBracket1Max: number
+    regTaxBracket2Pct: number
+    regTaxBracket2Max: number
+    regTaxBracket3Pct: number
+    evDeductionDkk: number
+    evDiscountPct2026: number
+    // SPEC-021: corporate cost model
+    marginalTaxRate: number
+    miljoeFactor: number
+    beskatningBracket1Pct: number
+    beskatningBracket1Max: number
+    beskatningBracket2Pct: number
+    beskatningMinBaseDkk: number
+    groenEjerafgiftDkk: number
 }
 
 export interface PurchaseBreakdown {
@@ -68,24 +76,44 @@ export interface FlexleaseBreakdown {
     fullRegistrationTax: number
     vehicleAgeMonths: number
     durationMonths: number
-    // Monthly decomposition (ex moms)
     monthlyFlexTax: number
-    monthlyFlexTaxAvg: number         // avg if rate transitions mid-lease
+    monthlyFlexTaxAvg: number
     monthlyStateInterest: number
     monthlyFinanceInterest: number
     monthlyAdminFee: number
     totalMonthlyExMoms: number
     totalMonthlyInclMoms: number
-    // Tax bracket detail
     taxBracketBreakdown: TaxBracketMonth[]
     totalFlexTaxOverPeriod: number
-    // Totals
     establishmentFeeInclMoms: number
     depreciationInclMoms: number
     downPayment: number
     tcoTotal: number
     monthlyEquivalent: number
     listedMonthlyPayment: number | null
+    notes: string
+}
+
+export interface CompanyFlexleaseBreakdown {
+    baseValue: number
+    fullRegistrationTax: number
+    vehicleAgeMonths: number
+    durationMonths: number
+    // Company cost (ex moms)
+    companyCostMonthlyExMoms: number
+    monthlyFlexTax: number
+    monthlyStateInterest: number
+    monthlyFinanceInterest: number
+    monthlyAdminFee: number
+    totalMonthlyExMoms: number
+    establishmentFeeExMoms: number
+    // Employee taxation
+    beskatningsgrundlag: number
+    annualTaxableBenefit: number
+    miljoeTillaeg: number
+    monthlyTaxableBenefit: number
+    employeeNetCostMonthly: number
+    marginalTaxRate: number
     notes: string
 }
 
@@ -98,10 +126,11 @@ export interface TaxBracketMonth {
 
 export interface CarComparisonResult {
     car: ComparisonCar
-    priceDkk: number                  // converted if EUR
+    priceDkk: number
     origins: Origin[]
     purchase: Record<Origin, PurchaseBreakdown>
     flexlease: FlexleaseBreakdown
+    companyFlexlease: CompanyFlexleaseBreakdown
 }
 
 export const DEFAULT_SETTINGS: ComparisonSettings = {
@@ -123,4 +152,12 @@ export const DEFAULT_SETTINGS: ComparisonSettings = {
     regTaxBracket3Pct: 150,
     evDeductionDkk: 165000,
     evDiscountPct2026: 60,
+    // SPEC-021 defaults
+    marginalTaxRate: 0.50,
+    miljoeFactor: 2.5,
+    beskatningBracket1Pct: 25,
+    beskatningBracket1Max: 300000,
+    beskatningBracket2Pct: 20,
+    beskatningMinBaseDkk: 160000,
+    groenEjerafgiftDkk: 5000,
 }

@@ -50,6 +50,27 @@ export const dictionary: Translations = {
     da: 'Bilens markedsværdi inklusiv 25% moms. Dette er beløbet som Motorstyrelsen beregner registreringsafgiften ud fra.',
     en: 'The car\'s market value including 25% VAT. This is the amount used by Motorstyrelsen to calculate registration tax.'
   },
+  'tooltip.dk_registered': {
+    da: 'Bilen er allerede registreret på danske plader. Ingen yderligere afgift eller moms skal betales.',
+    en: 'The car is already registered on Danish plates. No additional tax or VAT needs to be paid.'
+  },
+  // === SPEC-021: Corporate cost model tooltips ===
+  'tooltip.beskatningsgrundlag': {
+    da: 'Bilens skattemæssige værdi beregnet som markedsværdi + 25% moms + fuld registreringsafgift. For brugte biler over 36 måneder bruges aktuel markedsværdi, ikke nypris. Minimum 160.000 kr.',
+    en: 'The car\'s tax base calculated as market value + 25% VAT + full registration tax. For used cars older than 36 months, the current market value is used, not the original new price. Minimum DKK 160,000.'
+  },
+  'tooltip.fri_bil': {
+    da: 'Den skattepligtige fordel en medarbejder beskattes af ved at have en firmabil til rådighed. Beregnes som en procentdel af beskatningsgrundlaget.',
+    en: 'The taxable benefit an employee is taxed on for having a company car available. Calculated as a percentage of the tax base.'
+  },
+  'tooltip.miljoe_tillaeg': {
+    da: 'Grøn ejerafgift ganget med den lovbestemte miljøfaktor (aktuelt 250%). Tillægges den årlige skattepligtige fordel.',
+    en: 'Green owner\'s tax multiplied by the statutory environmental factor (currently 250%). Added to the annual taxable benefit.'
+  },
+  'tooltip.marginal_skattesats': {
+    da: 'Din personlige topskat-procent. Bruges til at beregne den faktiske nettoomkostning af firmabilbeskatning.',
+    en: 'Your personal marginal tax rate. Used to calculate the actual net cost of company car taxation.'
+  },
 
   // === UI labels ===
   'label.settings': { da: 'Indstillinger', en: 'Settings' },

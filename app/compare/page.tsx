@@ -68,6 +68,12 @@ export default function ComparePage() {
     return lowest
   }, [results])
 
+  const lowestCompanyFlexMonthly = useMemo(() => {
+    let lowest = Infinity
+    for (const r of results) { if (r.companyFlexlease.employeeNetCostMonthly < lowest) lowest = r.companyFlexlease.employeeNetCostMonthly }
+    return lowest
+  }, [results])
+
   const handleRemoveCar = useCallback((carId: string) => {
     removeCompareCar(carId)
     setCarIds((prev: string[]) => prev.filter((id: string) => id !== carId))
@@ -155,7 +161,8 @@ export default function ComparePage() {
                 const bestPurchase = Math.min(...result.origins.map((o: string) => result.purchase[o as keyof typeof result.purchase]?.monthlyEquivalent ?? Infinity))
                 const isLowestP = results.length > 1 && bestPurchase === lowestPurchaseMonthly
                 const isLowestF = results.length > 1 && result.flexlease.monthlyEquivalent === lowestFlexleaseMonthly
-                return (<CarColumn key={result.car.id} result={result} isLowestPurchase={isLowestP} isLowestFlexlease={isLowestF} onRemove={() => handleRemoveCar(result.car.id)} />)
+                const isLowestCF = results.length > 1 && result.companyFlexlease.employeeNetCostMonthly === lowestCompanyFlexMonthly
+                return (<CarColumn key={result.car.id} result={result} isLowestPurchase={isLowestP} isLowestFlexlease={isLowestF} isLowestCompanyFlex={isLowestCF} onRemove={() => handleRemoveCar(result.car.id)} />)
               })}
               {carIds.length < 5 && results.length > 0 && (
                 <button onClick={handleOpenAddModal} className="min-w-[320px] border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors h-64">

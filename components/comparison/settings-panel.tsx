@@ -56,7 +56,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
                 </div>
             </div>
 
-            {/* Financial settings */}
+            {/* Purchase settings */}
             <div className="space-y-3">
                 <p className="text-xs font-medium text-foreground uppercase tracking-wide">Køb</p>
                 <SettingInput
@@ -81,6 +81,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
                 />
             </div>
 
+            {/* Flexlease settings */}
             <div className="space-y-3">
                 <p className="text-xs font-medium text-foreground uppercase tracking-wide">Flexleasing</p>
                 <SettingInput
@@ -111,6 +112,31 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
                 />
             </div>
 
+            {/* Erhvervsleasing settings */}
+            <div className="space-y-3">
+                <p className="text-xs font-medium text-foreground uppercase tracking-wide">Erhvervsleasing</p>
+                <SettingInput
+                    label="Marginal skattesats"
+                    value={Math.round(settings.marginalTaxRate * 100)}
+                    onChange={(v) => update({ marginalTaxRate: v / 100 })}
+                    step={1}
+                    suffix="%"
+                />
+                <SettingInput
+                    label="Grøn ejerafgift"
+                    value={settings.groenEjerafgiftDkk}
+                    onChange={(v) => update({ groenEjerafgiftDkk: v })}
+                    suffix="kr/år"
+                />
+                <SettingInput
+                    label="Miljøfaktor"
+                    value={settings.miljoeFactor}
+                    onChange={(v) => update({ miljoeFactor: v })}
+                    step={0.1}
+                />
+            </div>
+
+            {/* General settings */}
             <div className="space-y-3">
                 <p className="text-xs font-medium text-foreground uppercase tracking-wide">Generelt</p>
                 <SettingInput
