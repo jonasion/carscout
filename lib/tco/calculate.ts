@@ -1,5 +1,6 @@
 // ============================================================
-// CARSCOUT TCO ENGINE v3 — 2026 Danish rules
+// CARSCOUT TCO ENGINE v4 — 2026 Danish rules
+// SPEC-020: Purchase origins, flexlease refinement, moms-aware
 // Running costs (fuel, insurance, maintenance) excluded pending
 // real data sources. Company car tax retained.
 // ============================================================
@@ -35,6 +36,14 @@ export interface TcoConfig {
     registration_tax_bracket_3_pct: number
     lease_stiftelsesgebyr_dkk: number
     lease_tinglysning_fixed_dkk: number
+    market_depreciation_rate: number
+    bank_interest_rate: number
+    leasing_finance_interest: number
+    state_residual_tax_interest: number
+    lease_admin_fee_monthly_dkk: number
+    loan_establishment_fee_dkk: number
+    lease_establishment_fee_dkk: number
+    eur_to_dkk_rate: number
 }
 
 export interface CarRaw {
@@ -52,6 +61,7 @@ export interface CarRaw {
     battery_kwh: number | null
     is_registered_dk: boolean
     has_dk_vat: boolean
+    country: string
     lease_monthly_dkk: number | null
     lease_down_payment_dkk: number | null
     lease_term_months: number | null
@@ -59,7 +69,7 @@ export interface CarRaw {
     listing_type: string
 }
 
-export type Origin = 'dk_registered' | 'dk_unregistered' | 'eu_import'
+export type Origin = 'dk_registered' | 'dk_exlease' | 'de_import' | 'de_import_exlease'
 export type ScenarioType = 'purchase' | 'flexlease'
 export type UsageType = 'private' | 'company'
 
@@ -91,10 +101,11 @@ export async function readTcoConfig(): Promise<TcoConfig> {
 
 // ============================================================
 // 2. REGISTRATION TAX — exact 2026 rules
+// Input: afgiftspligtigVaerdi (market value INCL. 25% moms)
 // ============================================================
 
 export function calculateRegistrationTax(
-    purchasePrice: number,
+    afgiftspligtigVaerdi: number,
     fuelType: string,
     co2GKm: number | null,
     config: TcoConfig
@@ -109,10 +120,10 @@ export function calculateRegistrationTax(
 
     if (isEV) {
         evDeductionApplied = config.registration_tax_ev_deduction_dkk
-        taxableValue = purchasePrice - evDeductionApplied - baseDeduction
+        taxableValue = afgiftspligtigVaerdi - evDeductionApplied - baseDeduction
         notes = 'EV 2026 brackets — 60% discount applied'
     } else {
-        taxableValue = purchasePrice - baseDeduction
+        taxableValue = afgiftspligtigVaerdi - baseDeduction
     }
 
     taxableValue = Math.max(0, taxableValue)
@@ -213,7 +224,30 @@ function monthlyAnnuityPayment(
 }
 
 // ============================================================
-// 5. PURCHASE SCENARIO
+// 5. ORIGIN DETERMINATION
+// ============================================================
+
+function determineOrigins(car: CarRaw): Origin[] {
+    if (car.is_registered_dk) return ['dk_registered']
+    if (car.country === 'DK') return ['dk_exlease']
+    if (car.country === 'DE') return ['de_import', 'de_import_exlease']
+    // Other EU countries: treat as de_import pattern
+    return ['de_import']
+}
+
+// ============================================================
+// 6. VEHICLE AGE
+// ============================================================
+
+function getVehicleAgeMonths(firstRegistrationYear: number): number {
+    const firstReg = new Date(firstRegistrationYear, 0, 1)
+    return Math.floor(
+        (Date.now() - firstReg.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
+    )
+}
+
+// ============================================================
+// 7. PURCHASE SCENARIO
 // ============================================================
 
 async function calculatePurchaseScenario(
@@ -225,34 +259,41 @@ async function calculatePurchaseScenario(
     loanRatePct: number,
     config: TcoConfig
 ) {
-    const purchasePrice = car.price_amount
+    const baseValue = car.price_amount
+
+    // --- Moms handling per origin ---
+    let momsAmount = 0
+    let importCosts = 0
+
+    if (origin === 'dk_exlease' || origin === 'de_import_exlease') {
+        momsAmount = Math.round(baseValue * 0.25)
+    }
+
+    if (origin === 'de_import' || origin === 'de_import_exlease') {
+        importCosts = config.import_generic_costs_dkk
+    }
+
+    // --- Registration tax ---
+    // Motorstyrelsen calculates on den afgiftspligtige værdi (base + moms)
+    const afgiftspligtigVaerdi = baseValue + momsAmount
 
     let registrationTax = 0
     let evDeductionApplied = 0
-    let vatSaved = 0
-    let importCosts = 0
     let taxNotes = ''
 
-    if (origin === 'dk_unregistered' || origin === 'eu_import') {
+    if (origin !== 'dk_registered') {
         const taxResult = calculateRegistrationTax(
-            purchasePrice, car.fuel_type, car.co2_g_km, config
+            afgiftspligtigVaerdi, car.fuel_type, car.co2_g_km, config
         )
         registrationTax = taxResult.tax
         evDeductionApplied = taxResult.evDeductionApplied
         taxNotes = taxResult.notes
     }
 
-    if (origin === 'eu_import') {
-        const carAge = new Date().getFullYear() - (car.first_registration_year ?? 0)
-        if (carAge >= 1 && (car.mileage_km ?? 0) > 6000) {
-            vatSaved = Math.round(purchasePrice * 0.05)
-        }
-        importCosts = config.import_generic_costs_dkk
-    }
+    // --- On-road cost (total price on plates) ---
+    const onRoadCost = baseValue + momsAmount + registrationTax + importCosts
 
-    const onRoadCost = purchasePrice + registrationTax - vatSaved + importCosts
-
-    // Financing
+    // --- Financing ---
     const financedAmount = Math.max(0, onRoadCost - downPaymentDkk)
     const loanTermMonths = holdingYears * 12
     const monthlyLoanPayment = financedAmount > 0
@@ -260,19 +301,18 @@ async function calculatePurchaseScenario(
         : 0
     const totalLoanPayments = monthlyLoanPayment * loanTermMonths
 
-    // Company car tax (private = 0)
+    // --- Company car tax (private = 0) ---
     const companyCarTax = usageType === 'company'
         ? Math.round(onRoadCost * (config.company_car_tax_rate_pct / 100) * holdingYears)
         : 0
 
-    // Exit value
+    // --- Exit value (depreciation on onRoadCost — buyer owns full asset) ---
     const { residualPct, source: depSource } = await getDepreciation(
         car.brand, car.model, car.fuel_type, holdingYears
     )
     const exitValue = Math.round(onRoadCost * residualPct)
 
-    // Total — acquisition + financing + company tax - exit value
-    // Running costs (fuel, insurance, maintenance) excluded pending real data
+    // --- Total ---
     const totalOutOfPocket = Math.round(
         downPaymentDkk +
         totalLoanPayments +
@@ -287,7 +327,9 @@ async function calculatePurchaseScenario(
         scenario_type: 'purchase' as ScenarioType,
         usage_type: usageType,
         origin,
-        purchase_price_dkk: purchasePrice,
+        purchase_price_dkk: baseValue,
+        moms_amount_dkk: momsAmount,
+        afgiftspligtig_vaerdi_dkk: afgiftspligtigVaerdi,
         down_payment_dkk: downPaymentDkk,
         financed_amount_dkk: financedAmount,
         loan_rate_pct: loanRatePct,
@@ -295,7 +337,7 @@ async function calculatePurchaseScenario(
         monthly_loan_payment_dkk: Math.round(monthlyLoanPayment),
         registration_tax_dkk: registrationTax,
         ev_deduction_applied_dkk: evDeductionApplied,
-        vat_saved_dkk: vatSaved,
+        vat_saved_dkk: 0,
         import_costs_dkk: importCosts,
         total_on_road_cost_dkk: onRoadCost,
         fuel_energy_total_dkk: 0,
@@ -307,33 +349,108 @@ async function calculatePurchaseScenario(
         net_exit_proceeds_dkk: exitValue,
         total_outofpocket_dkk: totalOutOfPocket,
         monthly_equivalent_dkk: monthlyEquivalent,
+        vehicle_age_months: getVehicleAgeMonths(car.first_registration_year),
         notes: taxNotes || null,
     }
 }
 
 // ============================================================
-// 6. FLEXLEASE SCENARIO (simplified — Bilbasen provides monthly only)
+// 8. FLEXLEASE — TAX BRACKET RATE
 // ============================================================
 
-function calculateSimpleLeaseScenario(
+function getFlexTaxBracketRate(vehicleAgeMonths: number): number {
+    if (vehicleAgeMonths <= 3) return 0.02
+    if (vehicleAgeMonths <= 36) return 0.01
+    return 0.005
+}
+
+// ============================================================
+// 9. FLEXLEASE SCENARIO — full decomposition
+// ============================================================
+
+async function calculateFlexleaseScenario(
     car: CarRaw,
     usageType: UsageType,
     holdingYears: number,
     config: TcoConfig
 ) {
-    if (!car.lease_monthly_dkk) return null
-
-    const leaseMonthly = car.lease_monthly_dkk
+    const baseValue = car.price_amount
+    const isPrivate = usageType === 'private'
+    const vehicleAgeMonths = getVehicleAgeMonths(car.first_registration_year)
     const months = holdingYears * 12
-    const totalLeasePayments = leaseMonthly * months
 
-    // Company car tax — estimate car value from monthly × 200
-    const estimatedCarValue = leaseMonthly * 200
+    // --- Registration tax (needed for monthly flex tax calc) ---
+    // For flexlease, compute tax on base + moms (same Motorstyrelsen rules)
+    const momsForTax = Math.round(baseValue * 0.25)
+    const afgiftspligtigVaerdi = baseValue + momsForTax
+    const taxResult = calculateRegistrationTax(
+        afgiftspligtigVaerdi, car.fuel_type, car.co2_g_km, config
+    )
+    const fullRegistrationTax = taxResult.tax
+
+    // --- Monthly payment decomposition ---
+    const taxBracketRate = getFlexTaxBracketRate(vehicleAgeMonths)
+    const monthlyFlexTax = fullRegistrationTax * taxBracketRate
+    const stateResidualInterest = (config.state_residual_tax_interest || 3.8) / 100
+    const leasingFinanceInterest = (config.leasing_finance_interest || 4.5) / 100
+    const adminFeeMonthly = config.lease_admin_fee_monthly_dkk || 300
+
+    const monthlyStateInterest = (fullRegistrationTax * stateResidualInterest) / 12
+    const monthlyFinanceInterest = (baseValue * leasingFinanceInterest) / 12
+    const totalExMoms = monthlyFlexTax + monthlyStateInterest + monthlyFinanceInterest + adminFeeMonthly
+    const totalInclMoms = isPrivate ? totalExMoms * 1.25 : totalExMoms
+
+    // --- Use listed monthly payment if available ---
+    let actualMonthlyPayment = totalInclMoms
+    let paymentNote = `Computed: bracket ${taxBracketRate * 100}%, age ${vehicleAgeMonths}mo`
+
+    if (car.lease_monthly_dkk && car.lease_monthly_dkk > 0) {
+        actualMonthlyPayment = car.lease_monthly_dkk
+        paymentNote = 'Monthly payment from listing. Decomposition estimated.'
+    }
+
+    const totalLeasePayments = actualMonthlyPayment * months
+
+    // --- Upfront costs ---
+    const establishmentFeeExMoms = config.lease_establishment_fee_dkk || 5000
+    const establishmentFeeInclMoms = isPrivate
+        ? Math.round(establishmentFeeExMoms * 1.25)
+        : establishmentFeeExMoms
+    const downPayment = car.lease_down_payment_dkk ?? 0
+
+    // --- Depreciation on base value only (NOT on_road_cost) ---
+    const depRate = (config.market_depreciation_rate || 15) / 100
+    const { residualPct, source: depSource } = await getDepreciation(
+        car.brand, car.model, car.fuel_type, holdingYears
+    )
+    const depreciationExMoms = baseValue * (1 - residualPct)
+    const depreciationInclMoms = isPrivate
+        ? Math.round(depreciationExMoms * 1.25)
+        : Math.round(depreciationExMoms)
+
+    // --- Exit value ---
+    const exitValue = Math.round(baseValue * residualPct)
+
+    // --- Company car tax ---
     const companyCarTax = usageType === 'company'
-        ? Math.round(estimatedCarValue * (config.company_car_tax_rate_pct / 100) * holdingYears)
+        ? Math.round(baseValue * (config.company_car_tax_rate_pct / 100) * holdingYears)
         : 0
 
-    const totalOutOfPocket = Math.round(totalLeasePayments + companyCarTax)
+    // --- Restværdi risk ---
+    let restvaerdiRisk = 0
+    if (car.lease_restvaerdi_dkk && car.lease_restvaerdi_dkk > exitValue) {
+        restvaerdiRisk = car.lease_restvaerdi_dkk - exitValue
+    }
+
+    // --- Total ---
+    const totalOutOfPocket = Math.round(
+        downPayment +
+        establishmentFeeInclMoms +
+        totalLeasePayments +
+        companyCarTax +
+        restvaerdiRisk -
+        exitValue
+    )
     const monthlyEquivalent = Math.round(totalOutOfPocket / months)
 
     return {
@@ -342,41 +459,51 @@ function calculateSimpleLeaseScenario(
         scenario_type: 'flexlease' as ScenarioType,
         usage_type: usageType,
         origin: 'dk_registered' as Origin,
-        purchase_price_dkk: estimatedCarValue,
-        down_payment_dkk: 0,
+        purchase_price_dkk: baseValue,
+        moms_amount_dkk: momsForTax,
+        afgiftspligtig_vaerdi_dkk: afgiftspligtigVaerdi,
+        down_payment_dkk: downPayment,
         financed_amount_dkk: null,
         loan_rate_pct: null,
         loan_term_months: null,
         monthly_loan_payment_dkk: null,
-        registration_tax_dkk: null,
-        ev_deduction_applied_dkk: null,
+        registration_tax_dkk: fullRegistrationTax,
+        ev_deduction_applied_dkk: taxResult.evDeductionApplied,
         vat_saved_dkk: null,
         import_costs_dkk: null,
         total_on_road_cost_dkk: null,
-        lease_stiftelsesgebyr_dkk: null,
+        lease_stiftelsesgebyr_dkk: establishmentFeeInclMoms,
         lease_tinglysning_dkk: null,
-        lease_monthly_payment_dkk: leaseMonthly,
-        lease_down_payment_dkk: 0,
+        lease_monthly_payment_dkk: Math.round(actualMonthlyPayment),
+        lease_down_payment_dkk: downPayment,
         lease_term_months: months,
-        lease_restvaerdi_dkk: null,
+        lease_restvaerdi_dkk: car.lease_restvaerdi_dkk ?? null,
         lease_implied_apr_pct: null,
-        lease_total_payments_dkk: totalLeasePayments,
+        lease_total_payments_dkk: Math.round(totalLeasePayments),
+        lease_tax_bracket_rate: taxBracketRate,
+        lease_monthly_flex_tax_dkk: Math.round(monthlyFlexTax),
+        lease_monthly_state_interest_dkk: Math.round(monthlyStateInterest),
+        lease_monthly_finance_interest_dkk: Math.round(monthlyFinanceInterest),
+        lease_monthly_admin_fee_dkk: adminFeeMonthly,
+        lease_monthly_ex_moms_dkk: Math.round(totalExMoms),
+        lease_monthly_incl_moms_dkk: Math.round(totalInclMoms),
+        vehicle_age_months: vehicleAgeMonths,
         fuel_energy_total_dkk: 0,
         insurance_total_dkk: 0,
         maintenance_total_dkk: 0,
         company_car_tax_total_dkk: companyCarTax,
-        estimated_market_value_at_exit_dkk: null,
-        depreciation_source: null,
-        restvaerdi_risk_dkk: null,
-        net_exit_proceeds_dkk: null,
+        estimated_market_value_at_exit_dkk: exitValue,
+        depreciation_source: depSource,
+        restvaerdi_risk_dkk: restvaerdiRisk,
+        net_exit_proceeds_dkk: exitValue,
         total_outofpocket_dkk: totalOutOfPocket,
         monthly_equivalent_dkk: monthlyEquivalent,
-        notes: `Leasing ${leaseMonthly} kr/md inkl. moms`,
+        notes: `${taxResult.notes}. ${paymentNote}`,
     }
 }
 
 // ============================================================
-// 7. MATRIX RUNNER — entry point
+// 10. MATRIX RUNNER — entry point
 // ============================================================
 
 export async function computeAllScenarios(
@@ -397,7 +524,7 @@ export async function computeAllScenarios(
     const effectiveLoanRate = loanRatePct ?? (config as any).user_loan_rate_pct ?? 5.0
 
     // Convert EUR prices to DKK
-    const eurRate = (config as any).eur_to_dkk_rate ?? 7.46
+    const eurRate = config.eur_to_dkk_rate || 7.46
     if (car.price_currency === 'EUR') {
         car.price_amount = Math.round(car.price_amount * eurRate)
     }
@@ -410,12 +537,10 @@ export async function computeAllScenarios(
     const leasePeriods = [1, 2, 3]
     const usageTypes: UsageType[] = ['private', 'company']
 
-    // Determine origins
-    const origins: Origin[] = car.is_registered_dk
-        ? ['dk_registered']
-        : ['dk_unregistered', 'eu_import']
+    // Determine origins based on car data
+    const origins = determineOrigins(car)
 
-    // Purchase scenarios (skip if listing is lease-only with no real purchase price)
+    // Purchase scenarios
     const isLeaseOnly = car.listing_type === 'lease' && car.price_amount === car.lease_monthly_dkk
     if (!isLeaseOnly) {
         for (const years of purchasePeriods) {
@@ -430,13 +555,11 @@ export async function computeAllScenarios(
         }
     }
 
-    // Lease scenarios
-    if (car.lease_monthly_dkk) {
-        for (const years of leasePeriods) {
-            for (const usage of usageTypes) {
-                const scenario = calculateSimpleLeaseScenario(car, usage, years, config)
-                if (scenario) scenarios.push(scenario)
-            }
+    // Flexlease scenarios — always computed (engine calculates from base data)
+    for (const years of leasePeriods) {
+        for (const usage of usageTypes) {
+            const scenario = await calculateFlexleaseScenario(car, usage, years, config)
+            scenarios.push(scenario)
         }
     }
 

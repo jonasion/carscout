@@ -1,6 +1,7 @@
 "use client"
 
 import { useTheme } from "next-themes"
+import { useLocale } from "@/lib/i18n/useLocale"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import type { Car, FilterState, FilterOptions } from "@/lib/types"
 import { FilterBar } from "@/components/filter-bar"
@@ -224,6 +225,7 @@ function CarTableView({ cars, onCarClick }: { cars: CarWithTco[]; onCarClick: (i
 
 export default function CarScoutPage() {
   const { theme, setTheme } = useTheme()
+  const { locale, setLocale, t } = useLocale()
   const [cars, setCars] = useState<CarWithTco[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null)
@@ -403,7 +405,7 @@ export default function CarScoutPage() {
       {showSettings && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={() => setShowSettings(false)}>
           <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold text-foreground mb-4">Beregningsindstillinger</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">{t('label.calculation_settings')}</h2>
             <div className="space-y-4">
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted-foreground">Udseende</label>
@@ -418,7 +420,18 @@ export default function CarScoutPage() {
                 </select>
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm text-muted-foreground">Udbetaling (DKK)</label>
+                <label className="text-sm text-muted-foreground">{t('label.language')}</label>
+                <select
+                  value={locale}
+                  onChange={(e) => setLocale(e.target.value as 'da' | 'en')}
+                  className="rounded-md border border-border bg-secondary px-3 py-2 text-foreground text-sm"
+                >
+                  <option value="da">{t('label.danish')}</option>
+                  <option value="en">{t('label.english')}</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm text-muted-foreground">{t('label.down_payment')}</label>
                 <input
                   type="number"
                   value={settingsDownPayment}
@@ -427,7 +440,7 @@ export default function CarScoutPage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm text-muted-foreground">Lånerente (%)</label>
+                <label className="text-sm text-muted-foreground">{t('label.loan_rate')}</label>
                 <input
                   type="number"
                   step="0.1"
@@ -442,18 +455,18 @@ export default function CarScoutPage() {
                   disabled={settingsLoading}
                   className="rounded-md bg-secondary border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary/80 disabled:opacity-50"
                 >
-                  {settingsSaved ? "✓ Gemt" : "Gem"}
+                  {settingsSaved ? t('label.saved') : t('label.save')}
                 </button>
                 <button
                   onClick={recomputeAll}
                   disabled={settingsLoading}
                   className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
-                  {settingsLoading ? "Beregner alle..." : "Gem & genberegn alle biler"}
+                  {settingsLoading ? t('label.recomputing') : t('label.save_recompute')}
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Genberegning opdaterer TCO for alle {cars.length} biler med de nye indstillinger.
+                {t('label.recompute_note')} ({cars.length} {t('label.cars_count')})
               </p>
             </div>
           </div>

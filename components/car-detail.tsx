@@ -41,7 +41,7 @@ const transmissionLabels: Record<string, string> = {
     automatic: "Automatisk", manual: "Manuel", Automatisk: "Automatisk", Manuel: "Manuel",
 }
 const originLabels: Record<string, string> = {
-    dk_registered: "DK registreret", dk_unregistered: "DK uden afgift", eu_import: "EU import",
+    dk_registered: "DK registreret", dk_exlease: "DK ex-leasing", de_import: "DE import", de_import_exlease: "DE ex-leasing",
 }
 
 function FuelBadge({ fuelType }: { fuelType: string }) {
@@ -94,7 +94,7 @@ function SectionHeader({ title }: { title: string }) {
 function PurchaseBreakdown({ scenario }: { scenario: TCOScenario }) {
     const [expanded, setExpanded] = useState(false)
     const s = scenario
-    const isImport = s.origin === "eu_import"
+    const isImport = s.origin === "de_import" || s.origin === "de_import_exlease"
     const hasRegTax = (s.registration_tax_dkk ?? 0) > 0
     const isCompany = s.usage_type === "company"
 
