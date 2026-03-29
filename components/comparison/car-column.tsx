@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { CarComparisonResult, Origin } from '@/lib/comparison/types'
 import { TooltipIcon } from './tooltip-icon'
 import { useLocale } from '@/lib/i18n/useLocale'
-import { X, ChevronDown, ChevronRight } from 'lucide-react'
+import { X, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react'
 
 interface CarColumnProps {
     result: CarComparisonResult
@@ -44,27 +44,17 @@ const originShortLabels: Record<Origin, string> = {
 }
 
 function Row({ label, tooltip, value, highlight, bold, separator, na }: {
-    label: string
-    tooltip?: string
-    value: string
-    highlight?: boolean
-    bold?: boolean
-    separator?: boolean
-    na?: boolean
+    label: string; tooltip?: string; value: string; highlight?: boolean; bold?: boolean; separator?: boolean; na?: boolean
 }) {
     return (
-        <div className={`flex items-center justify-between py-1.5 px-2 text-sm ${separator ? 'border-t border-border mt-1 pt-2' : ''
-            } ${highlight ? 'bg-primary/10 rounded' : ''}`}>
+        <div className={`flex items-center justify-between py-1.5 px-2 text-sm ${separator ? 'border-t border-border mt-1 pt-2' : ''} ${highlight ? 'bg-primary/10 rounded' : ''}`}>
             <span className={`text-muted-foreground flex items-center ${bold ? 'font-medium text-foreground' : ''}`}>
-                {label}
-                {tooltip && <TooltipIcon text={tooltip} />}
+                {label}{tooltip && <TooltipIcon text={tooltip} />}
             </span>
             {na ? (
                 <span className="text-muted-foreground/50 text-xs italic">Ikke relevant</span>
             ) : (
-                <span className={`text-foreground tabular-nums ${bold ? 'font-semibold' : ''}`}>
-                    {value}
-                </span>
+                <span className={`text-foreground tabular-nums ${bold ? 'font-semibold' : ''}`}>{value}</span>
             )}
         </div>
     )
@@ -76,16 +66,46 @@ function Accordion({ title, defaultOpen, children }: {
     const [open, setOpen] = useState(defaultOpen ?? false)
     return (
         <div>
-            <button
-                onClick={() => setOpen(!open)}
-                className="w-full flex items-center justify-between px-2 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-2 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
                 <span>{title}</span>
                 {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             </button>
             {open && <div>{children}</div>}
         </div>
     )
+}
+
+function InsightNote({ text }: { text: string }) {
+    return (
+        <div className="flex items-start gap-1.5 px-2 py-1.5 mx-2 mb-1 rounded bg-amber-500/10 text-[11px] text-amber-300 leading-tight">
+            <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+            <span>{text}</span>
+        </div>
+    )
+}
+
+function generateInsights(result: CarComparisonResult): string[] {
+    const insights: string[] = []
+    const best = result.purchase[result.bestPurchaseOrigin]
+    const flex = result.flexlease
+
+    if (best && flex) {
+        const diff = Math.abs(best.monthlyEquivalent - flex.monthlyEquivalent)
+        const maxVal = Math.max(best.monthlyEquivalent, flex.monthlyEquivalent)
+        if (maxVal > 0 && diff / maxVal > 0.25) {
+            if (flex.monthlyEquivalent > best.monthlyEquivalent) {
+                insights.push('Stor forskel: leasing er markant dyrere end køb pga. høj nedskrivning på grundværdi + moms.')
+            } else {
+                insights.push('Stor forskel: køb er markant dyrere — høj registreringsafgift driver totalpris op.')
+            }
+        }
+    }
+
+    if (flex && flex.depreciationPct > 40) {
+        insights.push(`Høj nedskrivning (${pct(flex.depreciationPct)}) — overvej kortere leasingperiode.`)
+    }
+
+    return insights
 }
 
 function PurchaseSection({ result, bankRate }: {
@@ -127,7 +147,6 @@ function PurchaseSection({ result, bankRate }: {
                                 <Row label="EV fradrag" tooltip={`${t('tooltip.ev_fradrag')} (Allerede fratrukket i afgiften ovenfor)`} value={`${fmt(p.evDeductionApplied)} kr (inkl. i afgift)`} />
                             )}
                             <Row label="Importomkostninger" value={`${fmt(p.importCosts)} kr`} na={!showImport} />
-
                             <div className="px-2 py-1 mt-1 text-xs font-medium text-muted-foreground uppercase tracking-wide border-t border-border">
                                 Finansiering (lån: {p.loanTermMonths} mdr)
                             </div>
@@ -169,6 +188,10 @@ function FlexleaseSection({ result }: { result: CarComparisonResult }) {
             {f.listedMonthlyPayment && (
                 <Row label="Annonceret ydelse" value={`${fmt(f.listedMonthlyPayment)} kr/md`} />
             )}
+            <Row label="Førstegangsydelse" value={`${fmt(f.downPayment)} kr`} />
+            <Row label={`Restværdi (${pct(100 - f.depreciationPct)})`}
+                tooltip="Forventet værdi ved leasingens udløb. Hvis markedsværdien er lavere, bærer du risikoen."
+                value={`${fmt(f.restvaerdiInclMoms)} kr`} />
             <Row label={`TCO ${f.leaseTermMonths} mdr`} value={`${fmt(f.tcoTotal)} kr`} bold separator highlight />
             <Row label="≈ månedlig" value={`${fmt(f.monthlyEquivalent)} kr/md`} bold />
 
@@ -180,7 +203,6 @@ function FlexleaseSection({ result }: { result: CarComparisonResult }) {
                 <div className="px-2 py-1 mt-1 text-xs font-medium text-muted-foreground uppercase tracking-wide border-t border-border">
                     Månedlig ydelse (ex. moms)
                 </div>
-
                 <Row label="Forholdsmæssig afgift/md" tooltip={t('tooltip.forholdsmassig_afgift')}
                     value={`${fmt(hasTransition ? f.monthlyFlexTaxAvg : f.monthlyFlexTax)} kr${hasTransition ? ' (gns.)' : ''}`} />
                 <Row label="Rente af restafgift/md" value={`${fmt(f.monthlyStateInterest)} kr`} />
@@ -191,8 +213,6 @@ function FlexleaseSection({ result }: { result: CarComparisonResult }) {
                 <div className="px-2 py-1 mt-1 text-xs font-medium text-muted-foreground uppercase tracking-wide border-t border-border">
                     Periodeomkostninger
                 </div>
-
-                <Row label="Førstegangsydelse" tooltip={t('tooltip.foerstegangsydelse')} value={`${fmt(f.downPayment)} kr`} />
                 <Row label="Oprettelse inkl. moms" value={`${fmt(f.establishmentFeeInclMoms)} kr`} />
                 <Row label={`Nedskrivning inkl. moms (${pct(f.depreciationPct)})`}
                     tooltip={`${t('tooltip.nedskrivning')} Restværdi: ${fmt(f.restvaerdiInclMoms)} kr`}
@@ -217,7 +237,7 @@ function CompanyFlexleaseSection({ result }: { result: CarComparisonResult }) {
             </div>
 
             <Row label="Virksomhedens ydelse ex. moms" value={`${fmt(c.companyCostMonthlyExMoms)} kr/md`} bold />
-            <Row label={`Virksomhedens TCO inkl. nedskrivning`}
+            <Row label="Virksomhedens TCO inkl. nedskrivning"
                 tooltip="Samlet virksomhedsomkostning inkl. månedlige ydelser, oprettelse og nedskrivning over perioden"
                 value={`${fmt(c.companyMonthlyCostIncDepreciation)} kr/md`} bold />
             <Row label={`Din nettopris (${Math.round(c.marginalTaxRate * 100)}% skat)`}
@@ -227,7 +247,6 @@ function CompanyFlexleaseSection({ result }: { result: CarComparisonResult }) {
                 <div className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide border-t border-border">
                     Virksomhedens omkostning
                 </div>
-
                 <Row label="Forholdsmæssig afgift/md" tooltip={t('tooltip.forholdsmassig_afgift')} value={`${fmt(c.monthlyFlexTax)} kr`} />
                 <Row label="Rente af restafgift/md" value={`${fmt(c.monthlyStateInterest)} kr`} />
                 <Row label="Finansieringsrente/md" value={`${fmt(c.monthlyFinanceInterest)} kr`} />
@@ -243,7 +262,6 @@ function CompanyFlexleaseSection({ result }: { result: CarComparisonResult }) {
                 <div className="px-2 py-1 mt-1 text-xs font-medium text-muted-foreground uppercase tracking-wide border-t border-border">
                     Medarbejderens beskatning
                 </div>
-
                 <Row label="Beskatningsgrundlag" tooltip={`${t('tooltip.beskatningsgrundlag')} ${ageNote}`}
                     value={`${fmt(c.beskatningsgrundlag)} kr`} />
                 <div className="px-2 py-0.5 text-[10px] text-muted-foreground/70 italic">{ageNote}</div>
@@ -259,16 +277,15 @@ function CompanyFlexleaseSection({ result }: { result: CarComparisonResult }) {
 }
 
 export function CarColumn({ result, isLowestPurchase, isLowestFlexlease, isLowestCompanyFlex, bankRate, onRemove }: CarColumnProps) {
-    const { locale } = useLocale()
     const car = result.car
     const flag = countryFlags[car.country] || ''
     const leaseTermMonths = result.flexlease.leaseTermMonths
-
     const bestPurchase = result.purchase[result.bestPurchaseOrigin]
     const bestOriginLabel = originShortLabels[result.bestPurchaseOrigin]
+    const insights = generateInsights(result)
 
     return (
-        <div className="min-w-[320px] border border-border rounded-xl bg-card overflow-hidden">
+        <div className="min-w-[340px] max-w-[380px] border border-border rounded-xl bg-card overflow-hidden flex flex-col">
             {/* Car header */}
             <div className="relative">
                 {car.stored_image_url ? (
@@ -301,30 +318,40 @@ export function CarColumn({ result, isLowestPurchase, isLowestFlexlease, isLowes
                 </div>
             </div>
 
-            {/* TCO Summary — 3 cards with clear labels */}
+            {/* TCO Summary cards — wider with upfront capital */}
             <div className="grid grid-cols-3 border-b border-border">
-                <div className={`p-2 text-center ${isLowestPurchase ? 'bg-emerald-500/10' : ''}`}>
-                    <p className="text-[10px] text-muted-foreground">Privat køb</p>
+                <div className={`p-2.5 text-center ${isLowestPurchase ? 'bg-emerald-500/10' : ''}`}>
+                    <p className="text-[10px] text-muted-foreground leading-tight">Privat køb</p>
                     <p className="text-[8px] text-muted-foreground/60">{bestOriginLabel}</p>
-                    <p className={`text-base font-bold ${isLowestPurchase ? 'text-emerald-400' : 'text-foreground'}`}>{fmt(bestPurchase?.monthlyEquivalent)}</p>
-                    <p className="text-[10px] text-muted-foreground">kr/md fuld TCO</p>
+                    <p className={`text-lg font-bold leading-tight ${isLowestPurchase ? 'text-emerald-400' : 'text-foreground'}`}>{fmt(bestPurchase?.monthlyEquivalent)}</p>
+                    <p className="text-[9px] text-muted-foreground">kr/md TCO</p>
+                    <p className="text-[9px] text-muted-foreground/60 mt-0.5">Udb: {fmt(bestPurchase?.downPayment)} kr</p>
                 </div>
-                <div className={`p-2 text-center border-l border-border ${isLowestFlexlease ? 'bg-emerald-500/10' : ''}`}>
-                    <p className="text-[10px] text-muted-foreground">Privat flex</p>
+                <div className={`p-2.5 text-center border-l border-border ${isLowestFlexlease ? 'bg-emerald-500/10' : ''}`}>
+                    <p className="text-[10px] text-muted-foreground leading-tight">Privat flex</p>
                     <p className="text-[8px] text-muted-foreground/60">{leaseTermMonths} mdr</p>
-                    <p className={`text-base font-bold ${isLowestFlexlease ? 'text-emerald-400' : 'text-foreground'}`}>{fmt(result.flexlease.monthlyEquivalent)}</p>
-                    <p className="text-[10px] text-muted-foreground">kr/md fuld TCO</p>
+                    <p className={`text-lg font-bold leading-tight ${isLowestFlexlease ? 'text-emerald-400' : 'text-foreground'}`}>{fmt(result.flexlease.monthlyEquivalent)}</p>
+                    <p className="text-[9px] text-muted-foreground">kr/md TCO</p>
+                    <p className="text-[9px] text-muted-foreground/60 mt-0.5">1. ydelse: {fmt(result.flexlease.downPayment)} kr</p>
                 </div>
-                <div className={`p-2 text-center border-l border-border ${isLowestCompanyFlex ? 'bg-emerald-500/10' : ''}`}>
-                    <p className="text-[10px] text-muted-foreground">Erhverv flex</p>
+                <div className={`p-2.5 text-center border-l border-border ${isLowestCompanyFlex ? 'bg-emerald-500/10' : ''}`}>
+                    <p className="text-[10px] text-muted-foreground leading-tight">Erhverv flex</p>
                     <p className="text-[8px] text-muted-foreground/60">{leaseTermMonths} mdr</p>
-                    <p className={`text-base font-bold ${isLowestCompanyFlex ? 'text-emerald-400' : 'text-foreground'}`}>{fmt(result.companyFlexlease.employeeNetCostMonthly)}</p>
-                    <p className="text-[10px] text-muted-foreground">kr/md din skat</p>
+                    <p className={`text-lg font-bold leading-tight ${isLowestCompanyFlex ? 'text-emerald-400' : 'text-foreground'}`}>{fmt(result.companyFlexlease.employeeNetCostMonthly)}</p>
+                    <p className="text-[9px] text-muted-foreground">kr/md din skat</p>
+                    <p className="text-[9px] text-muted-foreground/60 mt-0.5">Firma: {fmt(result.companyFlexlease.companyCostMonthlyExMoms)} kr/md</p>
                 </div>
             </div>
 
+            {/* Automated insights */}
+            {insights.length > 0 && (
+                <div className="py-2 border-b border-border">
+                    {insights.map((text, i) => <InsightNote key={i} text={text} />)}
+                </div>
+            )}
+
             {/* Detailed breakdowns */}
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-border flex-1">
                 <div className="py-2"><PurchaseSection result={result} bankRate={bankRate} /></div>
                 <div className="py-2"><FlexleaseSection result={result} /></div>
                 <div className="py-2"><CompanyFlexleaseSection result={result} /></div>

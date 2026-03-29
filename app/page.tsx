@@ -6,6 +6,9 @@ import { useState, useEffect, useCallback, useMemo } from "react"
 import type { Car, FilterState, FilterOptions } from "@/lib/types"
 import { FilterBar } from "@/components/filter-bar"
 import { CarCard, CarCardSkeleton } from "@/components/car-card"
+import { getCompareCarIds, addCompareCar, removeCompareCar } from "@/lib/comparison/store"
+import Link from "next/link"
+import { GitCompareArrows } from "lucide-react"
 import { CarDetail } from "@/components/car-detail"
 import { EmptyState } from "@/components/empty-state"
 import { Search, ArrowUpDown, LayoutGrid, TableProperties, ArrowUp, ArrowDown, Settings as SettingsIcon } from "lucide-react"
@@ -234,6 +237,25 @@ export default function CarScoutPage() {
   const [sortBy, setSortBy] = useState<SortOption>("added_desc")
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
   const [showSettings, setShowSettings] = useState(false)
+  
+  const [compareCarIds, setCompareCarIds] = useState<string[]>([])
+
+  useEffect(() => {
+    setCompareCarIds(getCompareCarIds())
+  }, [])
+
+  function handleToggleCompare(carId: string) {
+    if (compareCarIds.includes(carId)) {
+      removeCompareCar(carId)
+      setCompareCarIds(prev => prev.filter(id => id !== carId))
+    } else {
+      const result = addCompareCar(carId)
+      if (result.success) {
+        setCompareCarIds(prev => [...prev, carId])
+      }
+    }
+  }
+
   const [settingsDownPayment, setSettingsDownPayment] = useState(200000)
   const [settingsLoanRate, setSettingsLoanRate] = useState(5.0)
   const [settingsLoading, setSettingsLoading] = useState(false)
@@ -496,13 +518,26 @@ export default function CarScoutPage() {
             ) : (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {sortedCars.map((car) => (
-                  <CarCard key={car.id} car={car} onClick={() => handleCarClick(car.id)} />
+                  <CarCard key={car.id} car={car} onClick={() => handleCarClick(car.id)} isInCompare={compareCarIds.includes(car.id)} onToggleCompare={handleToggleCompare} />
                 ))}
               </div>
             )}
           </div>
         )}
       </div>
+
+      {/* Floating compare bar */}
+      {compareCarIds.length > 0 && !selectedCarId && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100]">
+          <Link
+            href="/compare"
+            className="flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
+          >
+            <GitCompareArrows className="h-4 w-4" />
+            Sammenlign {compareCarIds.length} {compareCarIds.length === 1 ? 'bil' : 'biler'}
+          </Link>
+        </div>
+      )}
     </main>
   )
 }

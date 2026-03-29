@@ -4,10 +4,13 @@ import { useEffect, useState } from "react"
 import type { Car } from "@/lib/types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { GitCompareArrows } from "lucide-react"
 
 type CarCardProps = {
     car: Car
     onClick: () => void
+    isInCompare?: boolean
+    onToggleCompare?: (carId: string) => void
 }
 
 function formatNumber(num: number): string {
@@ -49,7 +52,7 @@ function CarPlaceholder({ brand }: { brand: string }) {
     )
 }
 
-export function CarCard({ car, onClick }: CarCardProps) {
+export function CarCard({ car, onClick, isInCompare, onToggleCompare }: CarCardProps) {
     const [lowestTco, setLowestTco] = useState<number | null>(null)
     const [tcoStatus, setTcoStatus] = useState<'loading' | 'computing' | 'ready' | 'failed'>('loading')
     const [imageError, setImageError] = useState(false)
@@ -94,6 +97,11 @@ export function CarCard({ car, onClick }: CarCardProps) {
     const flag = countryFlags[car.country] || ""
     const name = countryNames[car.country] ?? car.country
 
+    function handleCompareClick(e: React.MouseEvent) {
+        e.stopPropagation()
+        onToggleCompare?.(car.id)
+    }
+
     return (
         <Card
             className="group cursor-pointer overflow-hidden border-border bg-card transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
@@ -113,6 +121,20 @@ export function CarCard({ car, onClick }: CarCardProps) {
                 <div className="absolute right-2 top-2 flex items-center gap-1.5">
                     <FuelBadge fuelType={car.fuel_type} />
                 </div>
+                {/* Compare button */}
+                {onToggleCompare && (
+                    <button
+                        onClick={handleCompareClick}
+                        className={`absolute left-2 top-2 flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all ${isInCompare
+                                ? 'bg-primary text-primary-foreground shadow-md'
+                                : 'bg-background/80 text-muted-foreground hover:bg-background hover:text-foreground backdrop-blur-sm'
+                            }`}
+                        title={isInCompare ? 'Fjern fra sammenligning' : 'Tilføj til sammenligning'}
+                    >
+                        <GitCompareArrows className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">{isInCompare ? 'Tilføjet' : 'Sammenlign'}</span>
+                    </button>
+                )}
             </div>
             <CardContent className="p-4">
                 <div className="mb-2">
