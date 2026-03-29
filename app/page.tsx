@@ -1,5 +1,6 @@
 "use client"
 
+import { useTheme } from "next-themes"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import type { Car, FilterState, FilterOptions } from "@/lib/types"
 import { FilterBar } from "@/components/filter-bar"
@@ -222,6 +223,7 @@ function CarTableView({ cars, onCarClick }: { cars: CarWithTco[]; onCarClick: (i
 }
 
 export default function CarScoutPage() {
+  const { theme, setTheme } = useTheme()
   const [cars, setCars] = useState<CarWithTco[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null)
@@ -403,6 +405,18 @@ export default function CarScoutPage() {
           <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-foreground mb-4">Beregningsindstillinger</h2>
             <div className="space-y-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm text-muted-foreground">Udseende</label>
+                <select
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value)}
+                  className="rounded-md border border-border bg-secondary px-3 py-2 text-foreground text-sm"
+                >
+                  <option value="system">System</option>
+                  <option value="light">Lys</option>
+                  <option value="dark">Mørk</option>
+                </select>
+              </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted-foreground">Udbetaling (DKK)</label>
                 <input

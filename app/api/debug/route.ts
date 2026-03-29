@@ -1,24 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { listCars, upsertCar } from '@/lib/db/cars'
 
-export async function POST(request: NextRequest) {
-    const { searchUrl } = await request.json()
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
 
-    const scrapflyUrl = new URL('https://api.scrapfly.io/scrape')
-    scrapflyUrl.searchParams.set('key', process.env.SCRAPFLY_API_KEY!)
-    scrapflyUrl.searchParams.set('url', searchUrl)
-    scrapflyUrl.searchParams.set('render_js', 'true')
-    scrapflyUrl.searchParams.set('country', 'dk')
-    scrapflyUrl.searchParams.set('asp', 'true')
+  const cars = await listCars({
+    source: searchParams.get('source') ?? undefined,
+    brand: searchParams.get('brand') ?? undefined,
+    model: searchParams.get('model') ?? undefined,
+    fuel_type: searchParams.get('fuel_type') ?? undefined,
+    transmission: searchParams.get('transmission') ?? undefined,
+    country: searchParams.get('country') ?? undefined,
+    min_price: searchParams.get('min_price') ? Number(searchParams.get('min_price')) : undefined,
+    max_price: searchParams.get('max_price') ? Number(searchParams.get('max_price')) : undefined,
+    min_year: searchParams.get('min_year') ? Number(searchParams.get('min_year')) : undefined,
+    max_year: searchParams.get('max_year') ? Number(searchParams.get('max_year')) : undefined,
+    max_mileage: searchParams.get('max_mileage') ? Number(searchParams.get('max_mileage')) : undefined,
+    min_power_kw: searchParams.get('min_power_kw') ? Number(searchParams.get('min_power_kw')) : undefined,
+    max_co2: searchParams.get('max_co2') ? Number(searchParams.get('max_co2')) : undefined,
+    limit: searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined,
+    offset: searchParams.get('offset') ? Number(searchParams.get('offset')) : undefined,
+  })
 
-    const response = await fetch(scrapflyUrl.toString())
-    const data = await response.json()
+  return NextResponse.json({ cars })
+}
 
-    return NextResponse.json({
-        topLevelKeys: Object.keys(data),
-        resultKeys: data.result ? Object.keys(data.result) : 'no result key',
-        statusCode: data.result?.status_code,
-        contentLength: data.result?.content?.length ?? 0,
-        contentPreview: data.result?.content?.slice(0, 300) ?? 'empty',
-        errorMessage: data.error ?? null,
-    })
+export async function POST(req: NextRequest) {
+  const body = await req.json()
+
+  const id = await upsertCar(body)
+
+  if (!id) {
+    return NextResponse.json({ error: 'Failed to upsert car' }, { status: 500 })
+  }
+
+  return NextResponse.json({ id })
 }

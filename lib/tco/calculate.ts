@@ -381,8 +381,8 @@ function calculateSimpleLeaseScenario(
 
 export async function computeAllScenarios(
     carId: string,
-    downPaymentDkk: number = 200000,
-    loanRatePct: number = 5.0
+    downPaymentDkk?: number,
+    loanRatePct?: number
 ) {
     const { data: car, error: carError } = await supabase
         .from('cars_raw')
@@ -393,6 +393,8 @@ export async function computeAllScenarios(
     if (carError || !car) throw new Error(`Car not found: ${carId}`)
 
     const config = await readTcoConfig()
+    const effectiveDownPayment = downPaymentDkk ?? (config as any).user_down_payment_dkk ?? 200000
+    const effectiveLoanRate = loanRatePct ?? (config as any).user_loan_rate_pct ?? 5.0
 
     // Convert EUR prices to DKK
     const eurRate = (config as any).eur_to_dkk_rate ?? 7.46
@@ -420,7 +422,7 @@ export async function computeAllScenarios(
             for (const usage of usageTypes) {
                 for (const origin of origins) {
                     const scenario = await calculatePurchaseScenario(
-                        car, origin, usage, years, downPaymentDkk, loanRatePct, config
+                        car, origin, usage, years, effectiveDownPayment, effectiveLoanRate, config
                     )
                     scenarios.push(scenario)
                 }

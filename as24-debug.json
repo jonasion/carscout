@@ -1,0 +1,1368 @@
+{
+  "vehicle": {
+    "licensePlate": null,
+    "carpassMileageUrl": null,
+    "makeId": 57,
+    "modelOrModelLineId": 75273,
+    "make": "Porsche",
+    "model": "Taycan",
+    "modelGroup": "Taycan",
+    "variant": "Taycan",
+    "modelId": 75273,
+    "modelGroupIds": [
+      75273
+    ],
+    "modelGenerationId": 1582,
+    "modelVariantId": 3313,
+    "motorTypeId": 5019,
+    "trimLineId": null,
+    "modelVersionInput": "4 S, Luftfederung 21Zoll,Batt Zert,Porsche  scheck",
+    "type": "Car",
+    "hsnTsn": null,
+    "mileageInKmRaw": 15300,
+    "mileageInKm": "15,300 km",
+    "firstRegistrationDateRaw": "2021-09-01",
+    "firstRegistrationDate": "09/2021",
+    "bodyType": "Sedan",
+    "numberOfSeats": 4,
+    "numberOfDoors": 4,
+    "bodyColor": "Red",
+    "paintType": "Others",
+    "bodyColorOriginal": null,
+    "engineHours": "",
+    "fuelDeliveryType": "",
+    "engineCoolingSystem": "",
+    "slideOutCount": null,
+    "chassisManufacturerName": "",
+    "exteriorMaterial": "",
+    "extendedLength": "",
+    "flooringMaterial": "",
+    "fridgePowerType": "",
+    "fridgeCapacity": "",
+    "waterTankCapacity": "",
+    "wasteTankCapacity": "",
+    "engineManufacturerName": "",
+    "axleSpread": "",
+    "brakeType": "",
+    "cabinAxleDistance": "",
+    "differentialRatio": "",
+    "frameType": "",
+    "rearAxleWeightRating": "",
+    "frontAxleWeightRating": "",
+    "isCabinClean": false,
+    "upholstery": null,
+    "upholsteryColor": "Beige",
+    "marketingDescription": "",
+    "controlModuleName": "",
+    "powerInKw": "420 kW",
+    "powerInHp": "571 hp",
+    "rawPowerInKw": 420,
+    "rawPowerInHp": 571,
+    "transmissionType": "Automatic",
+    "gears": 2,
+    "cylinders": null,
+    "driveTrain": "4WD",
+    "displacementInCCM": null,
+    "rawDisplacementInCCM": null,
+    "cylinderCapacity": null,
+    "rawCylinderCapacity": null,
+    "weight": "2,220 kg",
+    "hasParticleFilter": false,
+    "fuelCategory": {
+      "raw": "E",
+      "formatted": "Electric"
+    },
+    "batteryOwnershipType": {
+      "raw": null,
+      "formatted": null
+    },
+    "batteryChargingTime": {
+      "raw": null,
+      "formatted": null
+    },
+    "electricRangeWithFallback": {
+      "raw": 333,
+      "formatted": "333 km",
+      "isFallback": true
+    },
+    "electricRangeCity": {
+      "raw": null,
+      "formatted": null
+    },
+    "primaryFuel": {
+      "raw": 12,
+      "formatted": "Electricity"
+    },
+    "additionalFuel": [],
+    "fuelConsumptionCombined": {
+      "raw": null,
+      "formatted": "- (kWh/100 km)",
+      "isFallback": false
+    },
+    "fuelConsumptionUrban": {
+      "raw": null,
+      "formatted": null
+    },
+    "fuelConsumptionExtraUrban": {
+      "raw": null,
+      "formatted": null
+    },
+    "co2emissionInGramPerKmWithFallback": {
+      "raw": null,
+      "formatted": null,
+      "isFallback": null
+    },
+    "wltp": null,
+    "allFuelTypes": [],
+    "equipment": {
+      "comfortAndConvenience": [
+        {
+          "id": "Air conditioning",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Air suspension",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Automatic climate control",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Cruise control",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Electric tailgate",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Electrical side mirrors",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Electrically adjustable seats",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Keyless central door lock",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Leather steering wheel",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Light sensor",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Multi-function steering wheel",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Navigation system",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Panorama roof",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Park Distance Control",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Parking assist system camera",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Parking assist system sensors front",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Parking assist system sensors rear",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Power windows",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Rain sensor",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Seat heating",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        },
+        {
+          "id": "Split rear seats",
+          "categoryName": "Comfort & Convenience",
+          "categoryId": "comfortAndConvenience"
+        }
+      ],
+      "entertainmentAndMedia": [
+        {
+          "id": "Android Auto",
+          "categoryName": "Entertainment & Media",
+          "categoryId": "entertainmentAndMedia"
+        },
+        {
+          "id": "Apple CarPlay",
+          "categoryName": "Entertainment & Media",
+          "categoryId": "entertainmentAndMedia"
+        },
+        {
+          "id": "Bluetooth",
+          "categoryName": "Entertainment & Media",
+          "categoryId": "entertainmentAndMedia"
+        },
+        {
+          "id": "Digital radio",
+          "categoryName": "Entertainment & Media",
+          "categoryId": "entertainmentAndMedia"
+        },
+        {
+          "id": "Hands-free equipment",
+          "categoryName": "Entertainment & Media",
+          "categoryId": "entertainmentAndMedia"
+        },
+        {
+          "id": "USB",
+          "categoryName": "Entertainment & Media",
+          "categoryId": "entertainmentAndMedia"
+        },
+        {
+          "id": "WLAN / WiFi hotspot",
+          "categoryName": "Entertainment & Media",
+          "categoryId": "entertainmentAndMedia"
+        }
+      ],
+      "extras": [
+        {
+          "id": "Alloy wheels",
+          "categoryName": "Extras",
+          "categoryId": "extras"
+        },
+        {
+          "id": "Ambient lighting",
+          "categoryName": "Extras",
+          "categoryId": "extras"
+        },
+        {
+          "id": "Electronic parking brake",
+          "categoryName": "Extras",
+          "categoryId": "extras"
+        },
+        {
+          "id": "Heat Pump",
+          "categoryName": "Extras",
+          "categoryId": "extras"
+        },
+        {
+          "id": "Spoiler",
+          "categoryName": "Extras",
+          "categoryId": "extras"
+        },
+        {
+          "id": "Sport package",
+          "categoryName": "Extras",
+          "categoryId": "extras"
+        },
+        {
+          "id": "Touch screen",
+          "categoryName": "Extras",
+          "categoryId": "extras"
+        },
+        {
+          "id": "Winter tyres",
+          "categoryName": "Extras",
+          "categoryId": "extras"
+        }
+      ],
+      "safetyAndSecurity": [
+        {
+          "id": "ABS",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Alarm system",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Daytime running lights",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Distance warning system",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Driver-side airbag",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Electronic stability control",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Full-LED headlights",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Head airbag",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Immobilizer",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Isofix",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Lane departure warning system",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Laser headlights",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "LED Daytime Running Lights",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "LED Headlights",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Passenger-side airbag",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Power steering",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Side airbag",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Speed limit control system",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Tire pressure monitoring system",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Traction control",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Traffic sign recognition",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        },
+        {
+          "id": "Xenon headlights",
+          "categoryName": "Safety & Security",
+          "categoryId": "safetyAndSecurity"
+        }
+      ]
+    },
+    "environmentPkwEnVKV": null,
+    "environmentEuDirective": null,
+    "environmentBImSchV35": null,
+    "originalMarket": null,
+    "legalCategories": [
+      "Used"
+    ],
+    "legalCategoriesRaw": [
+      "UsedVehicle"
+    ],
+    "hadAccident": false,
+    "damageConditions": [],
+    "newInspection": false,
+    "lastBeltServiceDate": null,
+    "lastTechnicalServiceDate": "08/2025",
+    "hasFullServiceHistory": false,
+    "nonSmoking": false,
+    "noOfPreviousOwners": 3,
+    "nextVehicleSafetyInspection": null,
+    "isRental": false,
+    "numberOfBeds": null,
+    "numberOfAxles": null,
+    "wheelBase": null,
+    "totalHeight": null,
+    "totalWidth": null,
+    "totalLength": null,
+    "maximumTowingWeight": null,
+    "grossVehicleWeight": null,
+    "payload": null,
+    "loadWidth": null,
+    "loadHeight": null,
+    "loadLength": null,
+    "loadVolume": null,
+    "productionYear": null,
+    "hasCarRegistration": false,
+    "offerType": "U",
+    "newDriverSuitable": null,
+    "rawData": {
+      "usageState": "U",
+      "productionDate": null,
+      "legalCategories": [
+        {
+          "formatted": "Used",
+          "raw": "UsedVehicle"
+        }
+      ],
+      "classification": {
+        "type": "Car",
+        "modelYear": null,
+        "make": {
+          "raw": 57,
+          "formatted": "Porsche"
+        },
+        "model": {
+          "raw": 75273,
+          "formatted": "Taycan"
+        },
+        "modelGroups": [
+          {
+            "raw": 75273,
+            "formatted": "Taycan"
+          }
+        ],
+        "modelGeneration": {
+          "raw": 1582,
+          "formatted": "Y1A"
+        },
+        "modelVariant": {
+          "raw": 3313,
+          "formatted": "Taycan"
+        },
+        "motorType": {
+          "raw": 5019
+        },
+        "trimLine": null,
+        "modelVersionInput": "4 S, Luftfederung 21Zoll,Batt Zert,Porsche  scheck",
+        "germanHsnTsn": null
+      },
+      "fuels": {
+        "isPluginHybrid": null,
+        "primary": {
+          "type": {
+            "raw": 12,
+            "formatted": "Electricity"
+          },
+          "consumption": {
+            "combinedWithFallback": {
+              "raw": null,
+              "formatted": "- (kWh/100 km)",
+              "isFallback": false
+            },
+            "urban": null,
+            "extraUrban": null
+          },
+          "co2emissionInGramPerKmWithFallback": null
+        },
+        "additional": [],
+        "fuelCategory": {
+          "raw": "E",
+          "formatted": "Electric"
+        },
+        "wltp": null,
+        "electricRangeWithFallback": {
+          "raw": 333,
+          "formatted": "333 km",
+          "isFallback": true
+        },
+        "electricRangeCity": null,
+        "allFuelTypes": [],
+        "battery": null
+      },
+      "engine": {
+        "engineDisplacementInCCM": null,
+        "power": {
+          "kw": {
+            "raw": 420,
+            "formatted": "420 kW"
+          },
+          "hp": {
+            "raw": 571,
+            "formatted": "571 hp"
+          }
+        },
+        "transmissionType": {
+          "raw": "Automatic",
+          "formatted": "Automatic"
+        },
+        "numberOfCylinders": null,
+        "cylinderCapacity": null,
+        "numberOfGears": 2,
+        "driveTrain": {
+          "formatted": "4WD"
+        }
+      },
+      "condition": {
+        "firstRegistrationDate": {
+          "raw": "2021-09-01",
+          "formatted": "09/2021"
+        },
+        "mileageInKm": {
+          "raw": 15300,
+          "formatted": "15,300 km"
+        },
+        "numberOfPreviousOwnersExtended": {
+          "raw": 3,
+          "formatted": "3 previous owners"
+        },
+        "damage": {
+          "isCurrentlyDamaged": null,
+          "isRoadworthy": null,
+          "accidentFree": true,
+          "hasRepairedDamages": null,
+          "damageConditions": []
+        },
+        "nonSmoking": false,
+        "newInspection": false,
+        "isCabinClean": null,
+        "carpassMileageUrl": null
+      },
+      "bodyType": {
+        "formatted": "Sedan",
+        "raw": "Sedan"
+      },
+      "bodyColor": {
+        "formatted": "Red"
+      },
+      "numberOfBeds": {
+        "raw": null,
+        "formatted": "- (Number of beds)"
+      },
+      "numberOfAxles": {
+        "raw": null,
+        "formatted": "- (Axle count)"
+      },
+      "grossVehicleWeight": null,
+      "wheelBase": null,
+      "costModel": null,
+      "numberOfDoors": 4,
+      "paintType": {
+        "formatted": "Others"
+      },
+      "bodyColorOriginal": null,
+      "engineHours": null,
+      "interior": {
+        "numberOfSeats": 4,
+        "upholstery": null,
+        "upholsteryColor": {
+          "formatted": "Beige"
+        }
+      },
+      "emptyWeight": {
+        "formatted": "2,220 kg"
+      },
+      "identifier": {
+        "licensePlate": null,
+        "vin": null
+      },
+      "totalHeight": null,
+      "totalWidth": null,
+      "totalLength": null,
+      "maximumTowingWeight": null,
+      "payload": null,
+      "loadWidth": null,
+      "loadHeight": null,
+      "loadLength": null,
+      "loadVolume": null,
+      "hasCarRegistration": {
+        "raw": false
+      },
+      "environment": {
+        "particulateFilter": false,
+        "environmentLabelsWithFallback": []
+      },
+      "equipment": {
+        "as24": [
+          {
+            "id": {
+              "raw": 5,
+              "formatted": "Air conditioning"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 144,
+              "formatted": "Air suspension"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 30,
+              "formatted": "Automatic climate control"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 38,
+              "formatted": "Cruise control"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 139,
+              "formatted": "Electric tailgate"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 121,
+              "formatted": "Electrical side mirrors"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 16,
+              "formatted": "Electrically adjustable seats"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 153,
+              "formatted": "Keyless central door lock"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 142,
+              "formatted": "Leather steering wheel"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 126,
+              "formatted": "Light sensor"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 114,
+              "formatted": "Multi-function steering wheel"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 23,
+              "formatted": "Navigation system"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 50,
+              "formatted": "Panorama roof"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 40,
+              "formatted": "Park Distance Control"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 130,
+              "formatted": "Parking assist system camera"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 128,
+              "formatted": "Parking assist system sensors front"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 129,
+              "formatted": "Parking assist system sensors rear"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 13,
+              "formatted": "Power windows"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 127,
+              "formatted": "Rain sensor"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 34,
+              "formatted": "Seat heating"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 21,
+              "formatted": "Split rear seats"
+            },
+            "equipmentCategory": {
+              "raw": "comfortAndConvenience",
+              "formatted": "Comfort & Convenience"
+            }
+          },
+          {
+            "id": {
+              "raw": 222,
+              "formatted": "Android Auto"
+            },
+            "equipmentCategory": {
+              "raw": "entertainmentAndMedia",
+              "formatted": "Entertainment & Media"
+            }
+          },
+          {
+            "id": {
+              "raw": 221,
+              "formatted": "Apple CarPlay"
+            },
+            "equipmentCategory": {
+              "raw": "entertainmentAndMedia",
+              "formatted": "Entertainment & Media"
+            }
+          },
+          {
+            "id": {
+              "raw": 122,
+              "formatted": "Bluetooth"
+            },
+            "equipmentCategory": {
+              "raw": "entertainmentAndMedia",
+              "formatted": "Entertainment & Media"
+            }
+          },
+          {
+            "id": {
+              "raw": 138,
+              "formatted": "Digital radio"
+            },
+            "equipmentCategory": {
+              "raw": "entertainmentAndMedia",
+              "formatted": "Entertainment & Media"
+            }
+          },
+          {
+            "id": {
+              "raw": 124,
+              "formatted": "Hands-free equipment"
+            },
+            "equipmentCategory": {
+              "raw": "entertainmentAndMedia",
+              "formatted": "Entertainment & Media"
+            }
+          },
+          {
+            "id": {
+              "raw": 161,
+              "formatted": "USB"
+            },
+            "equipmentCategory": {
+              "raw": "entertainmentAndMedia",
+              "formatted": "Entertainment & Media"
+            }
+          },
+          {
+            "id": {
+              "raw": 220,
+              "formatted": "WLAN / WiFi hotspot"
+            },
+            "equipmentCategory": {
+              "raw": "entertainmentAndMedia",
+              "formatted": "Entertainment & Media"
+            }
+          },
+          {
+            "id": {
+              "raw": 11,
+              "formatted": "4WD"
+            },
+            "equipmentCategory": {
+              "raw": "extras",
+              "formatted": "Extras"
+            }
+          },
+          {
+            "id": {
+              "raw": 15,
+              "formatted": "Alloy wheels"
+            },
+            "equipmentCategory": {
+              "raw": "extras",
+              "formatted": "Extras"
+            }
+          },
+          {
+            "id": {
+              "raw": 219,
+              "formatted": "Ambient lighting"
+            },
+            "equipmentCategory": {
+              "raw": "extras",
+              "formatted": "Extras"
+            }
+          },
+          {
+            "id": {
+              "raw": 240,
+              "formatted": "Electronic parking brake"
+            },
+            "equipmentCategory": {
+              "raw": "extras",
+              "formatted": "Extras"
+            }
+          },
+          {
+            "id": {
+              "raw": 249,
+              "formatted": "Heat Pump"
+            },
+            "equipmentCategory": {
+              "raw": "extras",
+              "formatted": "Extras"
+            }
+          },
+          {
+            "id": {
+              "raw": 238,
+              "formatted": "Spoiler"
+            },
+            "equipmentCategory": {
+              "raw": "extras",
+              "formatted": "Extras"
+            }
+          },
+          {
+            "id": {
+              "raw": 112,
+              "formatted": "Sport package"
+            },
+            "equipmentCategory": {
+              "raw": "extras",
+              "formatted": "Extras"
+            }
+          },
+          {
+            "id": {
+              "raw": 159,
+              "formatted": "Touch screen"
+            },
+            "equipmentCategory": {
+              "raw": "extras",
+              "formatted": "Extras"
+            }
+          },
+          {
+            "id": {
+              "raw": 25,
+              "formatted": "Winter tyres"
+            },
+            "equipmentCategory": {
+              "raw": "extras",
+              "formatted": "Extras"
+            }
+          },
+          {
+            "id": {
+              "raw": 1,
+              "formatted": "ABS"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 18,
+              "formatted": "Alarm system"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 115,
+              "formatted": "Daytime running lights"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 232,
+              "formatted": "Distance warning system"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 2,
+              "formatted": "Driver-side airbag"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 42,
+              "formatted": "Electronic stability control"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 239,
+              "formatted": "Full-LED headlights"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 46,
+              "formatted": "Head airbag"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 26,
+              "formatted": "Immobilizer"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 125,
+              "formatted": "Isofix"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 157,
+              "formatted": "Lane departure warning system"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 213,
+              "formatted": "Laser headlights"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 141,
+              "formatted": "LED Daytime Running Lights"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 140,
+              "formatted": "LED Headlights"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 3,
+              "formatted": "Passenger-side airbag"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 12,
+              "formatted": "Power steering"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 32,
+              "formatted": "Side airbag"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 227,
+              "formatted": "Speed limit control system"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 150,
+              "formatted": "Tire pressure monitoring system"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 31,
+              "formatted": "Traction control"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 162,
+              "formatted": "Traffic sign recognition"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          },
+          {
+            "id": {
+              "raw": 39,
+              "formatted": "Xenon headlights"
+            },
+            "equipmentCategory": {
+              "raw": "safetyAndSecurity",
+              "formatted": "Safety & Security"
+            }
+          }
+        ]
+      },
+      "alloyWheelInches": null,
+      "originalMarket": null,
+      "maintenance": {
+        "nextVehicleSafetyInspection": null,
+        "lastBeltServiceDate": null,
+        "hasFullServiceHistory": {
+          "raw": false
+        },
+        "lastTechnicalServiceDate": {
+          "formatted": "08/2025"
+        }
+      },
+      "newDriverSuitable": null
+    },
+    "identifier": {
+      "vin": null
+    }
+  },
+  "price": {
+    "priceFormatted": "€ 61,000",
+    "isVatLabelLegallyRequired": false,
+    "isConditionalPrice": false
+  },
+  "prices": {
+    "isFinalPrice": false,
+    "public": {
+      "price": "€ 61,000",
+      "priceRaw": 61000,
+      "taxDeductible": false,
+      "negotiable": false,
+      "onRequestOnly": false,
+      "netPrice": null,
+      "netPriceRaw": null,
+      "vatRate": null,
+      "category": null,
+      "evaluationRanges": null
+    },
+    "dealer": {
+      "price": "€ 61,000",
+      "priceRaw": 61000,
+      "taxDeductible": false,
+      "negotiable": false,
+      "onRequestOnly": false,
+      "netPrice": null,
+      "netPriceRaw": null,
+      "vatRate": null,
+      "category": null,
+      "evaluationRanges": null
+    },
+    "suggestedRetail": null,
+    "popupUrl": "https://www.autoscout24.com/priceevaluation/price-label-explanation-page/78460ff9-9a0e-4d27-ad21-dfa46a72a01f?culture=en-GB",
+    "error": null
+  },
+  "location": {
+    "countryCode": "DE",
+    "zip": "83109",
+    "city": "Großkarolinenfeld",
+    "street": null,
+    "latitude": 47.89095,
+    "longitude": 12.07886
+  },
+  "seller": {
+    "id": 40985819,
+    "sellId": 0,
+    "isDealer": false,
+    "type": "PrivateSeller",
+    "companyName": null,
+    "contactName": null,
+    "logo": {
+      "small": {
+        "href": null
+      },
+      "big": {
+        "href": null
+      }
+    },
+    "links": {
+      "infoPage": null,
+      "imprint": null,
+      "stockLink": null
+    },
+    "phones": [],
+    "dealer": {
+      "maxImages": null,
+      "culture": null,
+      "isFreespeeCallTrackingEnabled": false,
+      "tieredPricingPackage": null,
+      "hasMyVehiclesRecommenderCarousel": false,
+      "superbranding": null,
+      "covidServices": null,
+      "openingHours": null,
+      "openingHoursRaw": null,
+      "homepageUrl": null,
+      "region": null,
+      "nationwideListingsData": null
+    }
+  },
+  "images": [
+    "https://prod.pictures.autoscout24.net/listing-images/78460ff9-9a0e-4d27-ad21-dfa46a72a01f_346f42c5-a9dd-47fd-97f1-89cddb35ba2e.jpg/1280x960.webp",
+    "https://prod.pictures.autoscout24.net/listing-images/78460ff9-9a0e-4d27-ad21-dfa46a72a01f_0cbba70a-cbc8-4fb5-abed-0e30895f8ce7.jpg/1280x960.webp",
+    "https://prod.pictures.autoscout24.net/listing-images/78460ff9-9a0e-4d27-ad21-dfa46a72a01f_5f4b3903-a02f-4e6f-acca-77f6a7df7766.jpg/1280x960.webp",
+    "https://prod.pictures.autoscout24.net/listing-images/78460ff9-9a0e-4d27-ad21-dfa46a72a01f_6c16f61c-902d-4fcb-93c4-70a3cf5530dd.jpg/1280x960.webp",
+    "https://prod.pictures.autoscout24.net/listing-images/78460ff9-9a0e-4d27-ad21-dfa46a72a01f_1306ad3f-2b69-4c72-8eba-17d738dc01a8.jpg/1280x960.webp",
+    "https://prod.pictures.autoscout24.net/listing-images/78460ff9-9a0e-4d27-ad21-dfa46a72a01f_55db4f6d-9f02-4bca-ad73-ab2208e8c289.jpg/1280x960.webp",
+    "https://prod.pictures.autoscout24.net/listing-images/78460ff9-9a0e-4d27-ad21-dfa46a72a01f_c17c59dd-b2de-48f8-b23c-8f3e1454f01a.jpg/1280x960.webp",
+    "https://prod.pictures.autoscout24.net/listing-images/78460ff9-9a0e-4d27-ad21-dfa46a72a01f_b355e1f0-9b00-4f9e-aea3-b62ae8edf46e.jpg/1280x960.webp",
+    "https://prod.pictures.autoscout24.net/listing-images/78460ff9-9a0e-4d27-ad21-dfa46a72a01f_1595da38-f3ac-43a9-ae73-0ec77d7dda6b.jpg/1280x960.webp",
+    "https://prod.pictures.autoscout24.net/listing-images/78460ff9-9a0e-4d27-ad21-dfa46a72a01f_99ff7527-f892-4c7a-9eb7-58e34ed271cc.jpg/1280x960.webp",
+    "https://prod.pictures.autoscout24.net/listing-images/78460ff9-9a0e-4d27-ad21-dfa46a72a01f_e4eaec57-ac82-4bbf-8954-b80fbd64d8f0.jpg/1280x960.webp"
+  ],
+  "id": "78460ff9-9a0e-4d27-ad21-dfa46a72a01f",
+  "tracking": {
+    "classified_recency": "regular",
+    "classified_makeId": 57,
+    "classified_makeTxt": "porsche",
+    "classified_modelID": 75273,
+    "classified_modelGroupID": 75273,
+    "classified_modelTxt": "taycan",
+    "classified_mileage": 15300,
+    "classified_power": 420,
+    "classified_price": 61000,
+    "classified_fueltype": "e",
+    "classified_transmission": "a",
+    "classified_equipment": "5,144,30,38,139,121,16,153,142,126,114,23,50,40,130,128,129,13,127,34,21,222,221,122,138,124,161,220,11,15,219,240,249,238,112,159,25,1,18,115,232,2,42,239,46,26,125,157,213,141,140,3,12,32,227,150,31,162,39",
+    "classified_offerType": "u",
+    "classified_prevOwners": 3,
+    "classified_doors": 4,
+    "classified_seats": 4,
+    "classified_customer_type": "p",
+    "classified_customerID": "40985819",
+    "classified_zipcode": "83109",
+    "classified_year": "2021",
+    "classified_bodyType": 6,
+    "classified_carSegment": "sedan,sport,upperclass",
+    "classified_country": "D",
+    "classified_tier": "t10",
+    "classified_applied_tier": "t10",
+    "classified_images_threesixty": "standard",
+    "classified_exclusiveOffer": "false",
+    "classified_leadsRange": "some",
+    "classified_imageContent": "no-placeholder|0.3142336623418599",
+    "classified_isSmyleEligible": "false",
+    "classified_ownershipModels": "tr"
+  }
+}
